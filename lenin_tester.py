@@ -1,10 +1,14 @@
 import unittest
+import os
+import shelve
 from collections import Generator
-from lenin_tokenizer import Tokenizer
+from lenin_tokenizer import Tokenizer, Indexer
 
 class GetTypeTest(unittest.TestCase):
+    
     def setUp(self):
         self.tokenizer = Tokenizer()
+        
     def test_alpa_latina(self):
         result = self.tokenizer._getType('c')
         self.assertEqual(len(result), 1)
@@ -12,6 +16,7 @@ class GetTypeTest(unittest.TestCase):
         result = self.tokenizer._getType('Z')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "a")
+
     def test_alpa_russa(self):
         result = self.tokenizer._getType('а')
         self.assertEqual(len(result), 1)
@@ -28,6 +33,7 @@ class GetTypeTest(unittest.TestCase):
         result = self.tokenizer._getType('А')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "a")
+
     def test_digit(self):
         result = self.tokenizer._getType('0')
         self.assertEqual(len(result), 1)
@@ -41,10 +47,12 @@ class GetTypeTest(unittest.TestCase):
         result = self.tokenizer._getType('9')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "d")
+
     def test_space(self):
         result = self.tokenizer._getType(' ')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "s")
+
     def test_punct(self):
         result = self.tokenizer._getType('.')
         self.assertEqual(len(result), 1)
@@ -65,7 +73,9 @@ class GetTypeTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "p")
 
+
 class GenerateWithTypeTest(unittest.TestCase):
+
     def setUp(self):
         self.tokenizer = Tokenizer()
 
@@ -85,6 +95,7 @@ class GenerateWithTypeTest(unittest.TestCase):
         self.assertEqual(result[6].s, 'tired')
         self.assertEqual(result[6].pos, 10)
         self.assertEqual(result[6].tp, 'a')
+
     def test_all_types_of_character(self):
         result = list(self.tokenizer.generate_with_type(
             'I am very  tired, I want to go to sleep at 6:30!!!'))
@@ -120,7 +131,9 @@ class GenerateWithTypeTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             list(self.tokenizer.generate(['this', 'is', 'a', 'trap']))
 
+
 class GenerateTest(unittest.TestCase):
+
     def setUp(self):
         self.tokenizer = Tokenizer()
 
@@ -198,6 +211,7 @@ class GenerateTest(unittest.TestCase):
 
             
 class TokenizeTest(unittest.TestCase):
+
     def setUp(self):
         self.tokenizer = Tokenizer()
 
@@ -265,13 +279,65 @@ class TokenizeTest(unittest.TestCase):
         result = self.tokenizer.tokenize("")
         self.assertEqual(len(result), 0)
 
-    def test_Error_wrong_input_number(self):
+    def test_error_wrong_input_number(self):
         with self.assertRaises(ValueError):
             self.tokenizer.tokenize(42)
             
-    def test_Error_wrong_input_list(self):
+    def test_error_wrong_input_list(self):
         with self.assertRaises(ValueError):
             self.tokenizer.tokenize(['this', 'is', 'a', 'trap'])    
 
+
+class IndexerTest(unittest.TestCase):
+
+    def SetUp(self):
+        self.indexer = Indexer()
+            
+    def test_error_wrong_input_number(self):
+        with self.assertRaises(ValueError):
+            self.indexer.index(42, 42)
+            
+    def test_error_wrong_input_list(self):
+        with self.assertRaises(ValueError):
+            self.indexer.index(['this', 'is', 'a', 'trap'], ["file.txt"])
+            
+    def test_error_wrong_input_wrong_path(self):
+        with self.assertRaises("какая-то ошибка"): #what error???
+            self.indexer.index("text.txt", "data") #what examples???
+
+    def test_empty_file(self):
+        with open("test.txt", 'w') as f:
+            f.write("")
+        self.indexer.index("test.txt", "db")
+        self.assertEqual(dict(shelve.open("...")), {})
+        #delete database
+        
+    def test_one_word(self):
+        with open("test.txt", 'w') as f:
+            f.write("test")
+        self.indexer.index("test.txt", "db")
+        self.assertEqual(dict(shelve.open("...")),
+                         {'test':{'test.txt':Position(0,4)}})
+        os.remove("bd")#delete database
+    def test_two_identical_words(self):
+        with open("test.txt", 'w') as f:
+            f.write("test test")
+        self.indexer.index("test.txt", "db")
+        self.assertEqual(dict(shelve.open("...")),
+                         {'test':{'test.txt':Position(0,4), Position(5,9)}})
+        #delete database
+    def test_two_different_words(self):
+        with open("test.txt", 'w') as f:
+            f.write("test case")
+        result = self.indexer.index("test.txt", "db")
+        self.assertEqual(dict(shelve.open("...")),
+                         {'test':{'test.txt':Position(0,4)}
+                          'case':{'test.txt':Position(5,9)}})
+        #delete database
+    def TearDown(self):
+        os.remove("test.txt")
+        
+
+    
 if __name__ == '__main__':
     unittest.main()
