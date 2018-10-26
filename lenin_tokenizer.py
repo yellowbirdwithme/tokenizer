@@ -25,6 +25,23 @@ class Token(object):
     def __repr__(self):
         return self.s + " " + str(self.pos)
 
+class Position(object):
+    """
+    Position stores data about the position of the first and the last
+    character of a token.
+    """
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+        
+    @classmethod
+    def from_token(cls, token):
+        return cls(token.pos, self.start+len(token.s))
+    
+    def __eq__(self, obj):
+        return self.start==obj.start and self.end==obj.end
+        
+
 class TypeToken(Token):
     """
     TypeToken is Token with a type.
@@ -173,6 +190,41 @@ class Tokenizer(object):
 
     def tokenize_with_type(self, text):
         return list(generate_with_type(text))
+
+    def generate_words_and_numbers(self,text):
+        for token in self.generate_with_type(text):
+            if token.tp == 'a' or token.tp == 'd':
+                yield token
+
+    
+class Indexer(object):
+    """
+    Every instance of class Indexer works with its own database.
+    """
+    def __init__(self, path):
+        """
+        Initialize itself.
+
+        Args:
+            path (str): path to database
+        """
+        self.db = shelve.open(path, writeback=True)
+        
+    def index(self, path):
+        """
+        Method index indexes a file and writes indexes into database self.db
+
+        Args:
+            path (str): path to the file to be indexed
+        """
+        tokenizer = Tokenizer()
+        for token in tokenizer.generate_words_and_numbers(text):
+            
+            #add tokens to db
+
+    def __del__(self):
+        self.db.close()
+        
 
 
 def main():
