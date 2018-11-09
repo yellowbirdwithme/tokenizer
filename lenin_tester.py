@@ -333,7 +333,7 @@ class IndexerTest(unittest.TestCase):
 
     def test_error_wrong_input_wrong_path(self):
         with self.assertRaises(FileNotFoundError): 
-            self.indexer.index("file.txt") #what examples???
+            self.indexer.index("file.txt")
 
     def test_empty_file(self):
         with open("test.txt", 'w') as f:
@@ -367,7 +367,11 @@ class IndexerTest(unittest.TestCase):
         self.assertEqual(dict(shelve.open("...")),
                          {'test':{'test.txt':Position(0,4)}
                           'case':{'test.txt':Position(5,9)}})
-        #delete database
+        del ind
+
+        for filename in os.listdir('.'):
+            if filename.startswith("test_db."):
+                os.remove(filename)
         
     def tearDown(self):
         os.remove("test.txt")
