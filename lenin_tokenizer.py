@@ -38,27 +38,31 @@ class Position(object):
     Attributes:
         start (int): position of the first character of the token.
         end (int): position after the last character of the token.
+        line (int): line in which the token is.
     """
-    def __init__(self, start, end):
+    def __init__(self, start, end, line):
         """
         Creates an instance of class Position using start and end positions.
 
         Args:
             start (int): position of the first character of the token.
             end (int): position after the last character of the token.
+            line (int): line in which the token is.
         """
+        self.line = line
         self.start = start
         self.end = end
         
     @classmethod
-    def from_token(cls, token):
+    def from_token(cls, token, line):
         """
         Allows to create an instance of class Position using a token.
 
         Args:
             token (Token): token to get the position of.
+            line (int): line in which the token is.
         """
-        return cls(token.pos, token.pos + len(token.s))
+        return cls(token.pos, token.pos + len(token.s), line)
     
     def __eq__(self, obj):
         """
@@ -69,7 +73,9 @@ class Position(object):
         Args:
             obj (Position): instance to compare the given token to.
         """
-        return self.start == obj.start and self.end == obj.end
+        return (self.start == obj.start and
+                self.end == obj.end and
+                self.line == obj.line)
 
     def __repr__(self):
         return '(' + self.start + ', ' + self.end + ")"
@@ -281,18 +287,21 @@ class Indexer(object):
             path (str): path to the file to be indexed.
         """
         tokenizer = Tokenizer()
+        
         if not isinstance(path, str):
             raise ValueError
+        
         try:
-            with open(path) as file:
-                text = file.read()
+            file = open(path)
+                
         except IOError:
             raise FileNotFoundError("File not found or path is incorrect")
 
         # tokenize text, add tokens to database
-        for token in tokenizer.generate_words_and_numbers(text):
-            self.db.setdefault(token.s, {}).setdefault(path, []).append(
-                Position.from_token(token)
+        for line in file.readline:
+            for token in tokenizer.generate_words_and_numbers(line):
+                self.db.setdefault(token.s, {}).setdefault(path, []).append(
+                    Position.from_token(token, i)
             )
 
     def __del__(self):
@@ -304,8 +313,14 @@ def main():
         if filename.startswith("test_db."):
             os.remove(filename)
     ind = Indexer("test_db")
-    ind.index("textt.txt")
+    with open('test.txt', 'tw') as f:
+        f.write('''test me please
+                i have
+                many
+                lines)))''')
+    ind.index("test.txt")
     print(ind.db)
+    os.remove('test.txt')
     del ind
     for filename in os.listdir('.'):
         if filename.startswith("test_db."):
