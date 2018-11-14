@@ -4,6 +4,7 @@ import shelve
 from collections import Generator
 from lenin_tokenizer import Tokenizer, Indexer, Position
 
+
 class GetTypeTest(unittest.TestCase):
     """
     Tests private method _getType of class Tokenizer

@@ -25,6 +25,7 @@ class Token(object):
         """
         self.pos = pos
         self.s = s
+        
     def __repr__(self):
         return self.s + " " + str(self.pos)
 
@@ -57,7 +58,7 @@ class Position(object):
         Args:
             token (Token): token to get the position of.
         """
-        return cls(token.pos, token.pos+len(token.s))
+        return cls(token.pos, token.pos + len(token.s))
     
     def __eq__(self, obj):
         """
@@ -68,7 +69,7 @@ class Position(object):
         Args:
             obj (Position): instance to compare the given token to.
         """
-        return self.start==obj.start and self.end==obj.end
+        return self.start == obj.start and self.end == obj.end
 
     def __repr__(self):
         return '(' + self.start + ', ' + self.end + ")"
@@ -122,13 +123,13 @@ class Tokenizer(object):
                 o - other
         """
         cat = category(c)
-        if cat[0]=="L":
+        if cat[0] == "L":
             return "a"
-        elif cat[0]=="N":
+        elif cat[0] == "N":
             return "d"
-        elif cat[0]=="Z":
+        elif cat[0] == "Z":
             return "s"
-        elif cat[0]=="P":
+        elif cat[0] == "P":
             return "p"
         else:
             return "o"
@@ -190,7 +191,7 @@ class Tokenizer(object):
         """
         return list(self.generate(text))
 
-    def generate_with_type(self,text):
+    def generate_with_type(self, text):
         """
         Generator.
         Divides a string into TypeToken instances.
@@ -291,12 +292,12 @@ class Indexer(object):
         # tokenize text, add tokens to database
         for token in tokenizer.generate_words_and_numbers(text):
             self.db.setdefault(token.s, {}).setdefault(path, []).append(
-                Position.from_token(token))
+                Position.from_token(token)
+            )
 
     def __del__(self):
         self.db.close()
         
-
 
 def main():
     for filename in os.listdir('.'):
