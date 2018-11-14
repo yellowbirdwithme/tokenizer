@@ -2,7 +2,7 @@ import unittest
 import os
 import shelve
 from collections import Generator
-from lenin_tokenizer import Tokenizer, Indexer
+from lenin_tokenizer import Tokenizer, Indexer, Position
 
 class GetTypeTest(unittest.TestCase):
     """
@@ -32,18 +32,9 @@ class GetTypeTest(unittest.TestCase):
         result = self.tokenizer._getType('Я')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "a")
-        result = self.tokenizer._getType('А')
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result, "a")
 
     def test_digit(self):
         result = self.tokenizer._getType('0')
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result, "d")
-        result = self.tokenizer._getType('1')
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result, "d")
-        result = self.tokenizer._getType('3')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "d")
         result = self.tokenizer._getType('9')
@@ -57,9 +48,6 @@ class GetTypeTest(unittest.TestCase):
 
     def test_punct(self):
         result = self.tokenizer._getType('.')
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result, "p")
-        result = self.tokenizer._getType(',')
         self.assertEqual(len(result), 1)
         self.assertEqual(result, "p")
         result = self.tokenizer._getType('!')
@@ -321,7 +309,7 @@ class GenerateWordsAndNumbersTest(unittest.TestCase):
 class IndexerTest(unittest.TestCase):
     
     def setUp(self):
-        self.indexer = Indexer("bd") 
+        self.indexer = Indexer("test_db")
             
     def test_error_wrong_input_number(self):
         with self.assertRaises(ValueError):
@@ -329,54 +317,63 @@ class IndexerTest(unittest.TestCase):
             
     def test_error_wrong_input_list(self):
         with self.assertRaises(ValueError):
-            self.indexer.index(["file.txt"])
+            self.indexer.index(["test.txt"])
 
     def test_error_wrong_input_wrong_path(self):
         with self.assertRaises(FileNotFoundError): 
             self.indexer.index("file.txt")
 
     def test_empty_file(self):
-        with open("test.txt", 'w') as f:
+        with open("test.txt", 'tw') as f:
             f.write("")
         self.indexer.index("test.txt")
-        self.assertEqual(dict(shelve.open("...")), {})
-        #delete database
-        #for file in os.listdir:
-            
+        self.assertEqual(dict(self.indexer.db), {})
             
     def test_one_word(self):
-        with open("test.txt", 'w') as f:
+        with open("test.txt", 'tw') as f:
             f.write("test")
         self.indexer.index("test.txt")
-        self.assertEqual(dict(shelve.open("...")),
-                         {'test':{'test.txt':Position(0,4)}})
-        os.remove("bd") #delete database
+        self.assertEqual(dict(self.indexer.db),
+                         {'test':{'test.txt':[Position(0,4)]}})
         
     def test_two_identical_words(self):
-        with open("test.txt", 'w') as f:
+        with open("test.txt", 'tw') as f:
             f.write("test test")
         self.indexer.index("test.txt")
-        self.assertEqual(dict(shelve.open("...")),
-                         {'test':{'test.txt':Position(0,4), Position(5,9)}})
-        #delete database
+        self.assertEqual(dict(self.indexer.db),
+                         {'test':{'test.txt':[Position(0,4), Position(5,9)]}})
         
     def test_two_different_words(self):
-        with open("test.txt", 'w') as f:
+        with open("test.txt", 'tw') as f:
             f.write("test case")
-        result = self.indexer.index("test.txt")
-        self.assertEqual(dict(shelve.open("...")),
-                         {'test':{'test.txt':Position(0,4)}
-                          'case':{'test.txt':Position(5,9)}})
-        del ind
+        self.indexer.index("test.txt")
+        self.assertEqual(dict(self.indexer.db),
+                         {'test':{'test.txt':[Position(0,4)]},
+                          'case':{'test.txt':[Position(5,9)]}})
 
+    def test_two_files(self):
+        with open("test.txt", 'tw') as f:
+            f.write("file one")
+        with open("test1.txt", 'tw') as f:
+            f.write("file two")
+        self.indexer.index("test.txt")
+        self.indexer.index("test1.txt")
+        self.assertEqual(dict(self.indexer.db),
+                         {'file':{'test.txt':[Position(0,4)],
+                                  'test1.txt':[Position(0,4)]},
+                          'one':{'test.txt':[Position(5,8)]},
+                          'two':{'test1.txt':[Position(5,8)]}})
+        
+    def tearDown(self):
+        del self.indexer
         for filename in os.listdir('.'):
             if filename.startswith("test_db."):
                 os.remove(filename)
+        if 'test1.txt' in os.listdir('.'):
+            os.remove('test1.txt')
+        if 'test.txt' in os.listdir('.'):
+            os.remove('test.txt')
         
-    def tearDown(self):
-        os.remove("test.txt")
-        del self.indexer
- """       
 
     
 if __name__ == '__main__':

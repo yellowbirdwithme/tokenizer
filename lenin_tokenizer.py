@@ -280,14 +280,14 @@ class Indexer(object):
             path (str): path to the file to be indexed.
         """
         tokenizer = Tokenizer()
-        if not isinstance(text, str):
+        if not isinstance(path, str):
             raise ValueError
         try:
             with open(path) as file:
                 text = file.read()
         except IOError:
             raise FileNotFoundError("File not found or path is incorrect")
-            
+
         # tokenize text, add tokens to database
         for token in tokenizer.generate_words_and_numbers(text):
             self.db.setdefault(token.s, {}).setdefault(path, []).append(
