@@ -86,6 +86,5 @@ class IndexerTest(unittest.TestCase):
             os.remove('test.txt')
         
 
-    
 if __name__ == '__main__':
     unittest.main()
