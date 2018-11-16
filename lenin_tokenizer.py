@@ -78,7 +78,8 @@ class Position(object):
                 self.line == obj.line)
 
     def __repr__(self):
-        return '(' + self.start + ', ' + self.end + ")"
+        return '(' + str(self.start) + ',' + str(self.end) + ',' + \
+               str(self.line) + ")" 
         
 
 class TypeToken(Token):
@@ -292,17 +293,17 @@ class Indexer(object):
             raise ValueError
         
         try:
-            file = open(path)
-                
+            file = open(path)       
         except IOError:
             raise FileNotFoundError("File not found or path is incorrect")
 
         # tokenize text, add tokens to database
-        for line in file.readline:
+        for i, line in enumerate(file):
             for token in tokenizer.generate_words_and_numbers(line):
                 self.db.setdefault(token.s, {}).setdefault(path, []).append(
                     Position.from_token(token, i)
-            )
+                )
+        file.close()
 
     def __del__(self):
         self.db.close()
@@ -314,12 +315,9 @@ def main():
             os.remove(filename)
     ind = Indexer("test_db")
     with open('test.txt', 'tw') as f:
-        f.write('''test me please
-                i have
-                many
-                lines)))''')
+        f.write('''test me please\ni have\nmany\nlines)))''')
     ind.index("test.txt")
-    print(ind.db)
+    print(dict(ind.db))
     os.remove('test.txt')
     del ind
     for filename in os.listdir('.'):
