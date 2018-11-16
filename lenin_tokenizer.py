@@ -282,7 +282,8 @@ class Indexer(object):
         
     def index(self, path):
         """
-        Method index indexes a file and writes indexes into database self.db
+        Method index indexes a file by line and writes indexes into database
+        self.db.
 
         Args:
             path (str): path to the file to be indexed.
