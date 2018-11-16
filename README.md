@@ -1,6 +1,6 @@
 # What is this?
 
-This module allows to tokenize a string of characters.
+This module allows to tokenize a string of characters and index files.
 
 
 
