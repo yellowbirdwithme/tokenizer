@@ -2,10 +2,13 @@
 This module allows to tokenize a string of characters.
 """
 from unicodedata import category
+import shelve
+import os
+
 
 class Token(object):
     """
-    Token is a word that consists solely of alphabetic characters
+    Token is a word that consists solely of alphabetic characters.
     
     Attributes:
        pos (int): position of the first character of the token.
@@ -22,8 +25,10 @@ class Token(object):
         """
         self.pos = pos
         self.s = s
+        
     def __repr__(self):
         return self.s + " " + str(self.pos)
+
 
 class TypeToken(Token):
     """
@@ -46,11 +51,12 @@ class TypeToken(Token):
         Args:
             pos (int): position of the first character of the token.
             s (str): string represention of the token.
-            tp (str): type of token
+            tp (str): type of token.
         """
         self.pos = pos
         self.s = s
         self.tp = tp
+
 
 class Tokenizer(object):
     """
@@ -73,13 +79,13 @@ class Tokenizer(object):
                 o - other
         """
         cat = category(c)
-        if cat[0]=="L":
+        if cat[0] == "L":
             return "a"
-        elif cat[0]=="N":
+        elif cat[0] == "N":
             return "d"
-        elif cat[0]=="Z":
+        elif cat[0] == "Z":
             return "s"
-        elif cat[0]=="P":
+        elif cat[0] == "P":
             return "p"
         else:
             return "o"
@@ -88,7 +94,7 @@ class Tokenizer(object):
         """
         Generator.
         Divides a string into Token instances consisting of alphabetic
-        symbols
+        symbols.
 
         Args:
             text (str): String to be tokenized.
@@ -97,7 +103,7 @@ class Tokenizer(object):
             Token instances.
 
         Raises:
-            ValueError: in case text is not str
+            ValueError: in case text is not str.
         """
         if not isinstance(text, str):
             raise ValueError
@@ -128,7 +134,7 @@ class Tokenizer(object):
     def tokenize(self, text):
         """
         Divides a string into Token instances consisting of alphabetic
-        symbols
+        symbols.
 
         Args:
             text (str): String to be tokenized.
@@ -137,14 +143,14 @@ class Tokenizer(object):
             List of Token instances.
             
         Raises:
-            ValueError: in case text is not str    
+            ValueError: in case text is not str.
         """
         return list(self.generate(text))
 
-    def generate_with_type(self,text):
+    def generate_with_type(self, text):
         """
         Generator.
-        Divides a string into TypeToken instances
+        Divides a string into TypeToken instances.
         
         Args:
             text (str): String to be tokenized.
@@ -153,7 +159,7 @@ class Tokenizer(object):
             TypeToken instances.
 
         Raises:
-            ValueError: in case text is not str
+            ValueError: in case text is not str.
         """
         if not isinstance(text, str):
             raise ValueError
@@ -172,17 +178,44 @@ class Tokenizer(object):
         yield TypeToken(pos, text[pos:i+1], previousType)
 
     def tokenize_with_type(self, text):
-        return list(generate_with_type(text))
+        """
+        Divides a string into TypeToken instances.
+        
+        Args:
+            text (str): String to be tokenized.
+        
+        Returns:
+            list of TypeToken instances.
+
+        Raises:
+            ValueError: in case text is not str.
+        """
+        return list(self.generate_with_type(text))
+    
+    def generate_words_and_numbers(self,text):
+        """
+        Generator.
+        Divides a string into TypeToken instances. Returns only those with type
+        'a' or 'd'.
+        
+        Args:
+            text (str): String to be tokenized.
+        
+        Yields:
+            TypeToken instances with type 'a' or 'd' (alpabetic or digit).
+
+        Raises:
+            ValueError: in case text is not str.
+        """
+        for token in self.generate_with_type(text):
+            if token.tp == 'a' or token.tp == 'd':
+                yield token
 
 
 def main():
-    text = 'I am very  tired, I want to go to sleep at 6:30!'
-    tok = Tokenizer()
-    tokens = list(tok.generate_with_type(text))
-    for token in tokens:
-        print(token.pos, token.tp, token.s)
+    tokenizer = Tokenizer()
+    print(tokenizer.tokenize_with_type("This is my sting!!!111"))
 
 
 if __name__ == "__main__":
     main()
-    
