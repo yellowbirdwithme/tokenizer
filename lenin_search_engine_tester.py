@@ -10,32 +10,32 @@ from lenin_indexer import Position
 # test1.txt: "another text to test the search engine"
 # test2.txt: "cat\ndog\nmouse\nelephant\nchicken\nthese are animals"
 
-DB = {'this': {'test.txt': [Position(0,4,0)]},
-      'is': {'test.txt': [Position(5,7,0),
-                          Position(3,5,1)]},
-      'a': {'test.txt': [Position(8,9,0)]},
-      'test': {'test.txt': [Position(10,14,0),
-                            Position(9,13,1)],
-               'test1.txt': [Position(16,20,0)]},
-      'text': {'test.txt': [Position(15,19,0)],
-               'test1.txt': [Position(8,12,0)]},
-      'it': {'test.txt': [Position(0,2,1)]},
-      'to': {'test.txt': [Position(6,8,1)],
-             'test1.txt': [Position(13,15,0)]},
-      'search': {'test.txt': [Position(14,20,1)],
-                 'test1.txt': [Position(25,31,0)]},
-      'engine': {'test.txt': [Position(21,27,1)],
-                 'test1.txt': [Position(32,38,0)]},
-      'another': {'test1.txt': [Position(0,7,0)]},
-      'the': {'test1.txt': [Position(21,24,0)]},
-      'cat': {'test2.txt': [Position(0,3,0)]},
-      'dog': {'test2.txt': [Position(0,3,1)]},
-      'mouse': {'test2.txt': [Position(0,5,2)]},
-      'elephant': {'test2.txt': [Position(0,8,3)]},
-      'chicken': {'test2.txt': [Position(0,7,4)]},
-      'these': {'test2.txt': [Position(0,5,5)]},
-      'are': {'test2.txt': [Position(6,9,5)]},
-      'animals': {'test2.txt': [Position(10,17,5)]}}
+DB = {'this': {'test.txt': [Position(0, 4, 0)]},
+      'is': {'test.txt': [Position(5, 7, 0),
+                          Position(3, 5, 1)]},
+      'a': {'test.txt': [Position(8, 9, 0)]},
+      'test': {'test.txt': [Position(10, 14, 0),
+                            Position(9, 13, 1)],
+               'test1.txt': [Position(16, 20, 0)]},
+      'text': {'test.txt': [Position(15, 19, 0)],
+               'test1.txt': [Position(8, 12, 0)]},
+      'it': {'test.txt': [Position(0, 2, 1)]},
+      'to': {'test.txt': [Position(6, 8, 1)],
+             'test1.txt': [Position(13, 15, 0)]},
+      'search': {'test.txt': [Position(14, 20, 1)],
+                 'test1.txt': [Position(25, 31, 0)]},
+      'engine': {'test.txt': [Position(21, 27, 1)],
+                 'test1.txt': [Position(32, 38, 0)]},
+      'another': {'test1.txt': [Position(0, 7, 0)]},
+      'the': {'test1.txt': [Position(21, 24, 0)]},
+      'cat': {'test2.txt': [Position(0, 3, 0)]},
+      'dog': {'test2.txt': [Position(0, 3, 1)]},
+      'mouse': {'test2.txt': [Position(0, 5, 2)]},
+      'elephant': {'test2.txt': [Position(0, 8, 3)]},
+      'chicken': {'test2.txt': [Position(0, 7, 4)]},
+      'these': {'test2.txt': [Position(0, 5, 5)]},
+      'are': {'test2.txt': [Position(6, 9, 5)]},
+      'animals': {'test2.txt': [Position(10, 17, 5)]}}
 
 
 class SimpleSearchTest(unittest.TestCase):
@@ -106,16 +106,16 @@ class MultiwordSearchTest(unittest.TestCase):
 
     def test_adjacent_words(self):
         result = self.se.multiword_search("to test")
-        self.assertEqual(result, {'test.txt': [Position(6,8,1),
-                                               Position(10,14,0),
-                                               Position(9,13,1)],
-                                  'test1.txt': [Position(13,15,0),
-                                                Position(16,20,0)]})
+        self.assertEqual(result, {'test.txt': [Position(6, 8, 1),
+                                               Position(10, 14, 0),
+                                               Position(9, 13, 1)],
+                                  'test1.txt': [Position(13, 15, 0),
+                                                Position(16, 20, 0)]})
         
     def test_far_words(self):
         result = self.se.multiword_search("cat animals")
-        self.assertEqual(result, {'test2.txt': [Position(0,3,0),
-                                                Position(10,17,5)]})
+        self.assertEqual(result, {'test2.txt': [Position(0, 3, 0),
+                                                Position(10, 17, 5)]})
 
     def tearDown(self):
         del self.se

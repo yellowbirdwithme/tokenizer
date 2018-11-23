@@ -66,18 +66,18 @@ class SearchEngine(object):
         query = list(tokenizer.generate_words_and_numbers(query))
         simple_search_results = []
         for word in query:
-            simple_search_results.append(set(self.simple_search(word.s).keys()))
+            simple_search_results.append(set(self.simple_search(word.s)))
 
-        if not len(simple_search_results):
+        if not simple_search_results:
             return {}
         
         files_found = simple_search_results[1]
         for result in simple_search_results:
             files_found.intersection_update(result)
         final_result = {}
-        for file in files_found:
+        for f in files_found:
             for word in query:
-                final_result.setdefault(file, []).extend(self.db[word.s][file])
+                final_result.setdefault(f, []).extend(self.db[word.s][f])
         return final_result
         
     def __del__(self):
