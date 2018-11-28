@@ -78,6 +78,7 @@ class SearchEngine(object):
         for f in files_found:
             for word in query:
                 final_result.setdefault(f, []).extend(self.db[word.s][f])
+            final_result[f].sort()
         return final_result
         
     def __del__(self):

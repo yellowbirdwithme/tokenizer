@@ -106,8 +106,8 @@ class MultiwordSearchTest(unittest.TestCase):
 
     def test_adjacent_words(self):
         result = self.se.multiword_search("to test")
-        self.assertEqual(result, {'test.txt': [Position(6, 8, 1),
-                                               Position(10, 14, 0),
+        self.assertEqual(result, {'test.txt': [Position(10, 14, 0),
+                                               Position(6, 8, 1),
                                                Position(9, 13, 1)],
                                   'test1.txt': [Position(13, 15, 0),
                                                 Position(16, 20, 0)]})

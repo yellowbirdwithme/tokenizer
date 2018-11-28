@@ -3,9 +3,11 @@ This module allows to index a string of characters.
 """
 import shelve
 import os
+from functools import total_ordering
 from lenin_tokenizer import Tokenizer
 
 
+@total_ordering
 class Position(object):
     """
     Position stores data about the position of the first and the last
@@ -52,6 +54,15 @@ class Position(object):
         return (self.start == obj.start and
                 self.end == obj.end and
                 self.line == obj.line)
+
+    def __lt__(self, obj):
+        less = False
+        if self.line < obj.line:
+            less = True
+        if self.line == obj.line:
+            if self.start < obj.line:
+                less = True
+        return less
 
     def __repr__(self):
         return '(' + str(self.start) + ',' + str(self.end) + ',' + \
