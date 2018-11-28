@@ -21,7 +21,15 @@ This class allows to index a file line by line and write the indexes (line, posi
 
 ### SearchEngine
 
-A primitive search engine that returns positions of a given token.
+Search engine that performs a search agains a database specified during initialisation.
+
+#### simple_search
+
+A primitive search that returns positions of a given token.
+
+#### multiword_search
+
+Performs a search of a multiword query against the database. Returns positions of all words of the query in a given file.
 
 ## Why
 
