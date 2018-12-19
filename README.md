@@ -31,6 +31,10 @@ A primitive search that returns positions of a given token.
 
 Performs a search of a multiword query against the database. Returns positions of all words of the query in a given file.
 
+### tolstoy_db
+
+A database of "War and Peace" by Lev Tolstoy in Russian is created for testing the search engine.
+
 ## Why
 
 This module is created as a practical work for my university programming course.
