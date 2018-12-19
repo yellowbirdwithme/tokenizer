@@ -1,7 +1,6 @@
 import os
 import shelve
 from lenin_tokenizer import Tokenizer
-from lenin_indexer import Position
 
 
 class SearchEngine(object):
@@ -86,8 +85,10 @@ class SearchEngine(object):
 
 
 def main():
-    se = SearchEngine("test")
+    se = SearchEngine("tolstoy_db")
+    print(se.multiword_search(input()))
+    del se
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
