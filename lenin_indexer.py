@@ -3,7 +3,6 @@ This module allows to index a string of characters.
 """
 import shelve
 import os
-
 from functools import total_ordering
 from lenin_tokenizer import Tokenizer
 
@@ -41,9 +40,8 @@ class Position(object):
             token (Token): token to get the position of.
             line (int): line in which the token is.
         """
-
         return cls(line, token.pos, token.pos + len(token.s))
-
+    
     def __eq__(self, obj):
         """
         Checks if two instances of class Position are equal.
@@ -62,15 +60,15 @@ class Position(object):
         if self.line < obj.line:
             less = True
         if self.line == obj.line:
-            if self.start < obj.line:
+            if self.start < obj.start:
                 less = True
         return less
 
     def __repr__(self):
         return '(' + str(self.line) + ',' + str(self.start) + ',' + \
                 str(self.end) + ")" 
-
         
+    
 class Indexer(object):
     """
     Class Indexer allows to index files and write the indexes of tokens into a
@@ -108,7 +106,7 @@ class Indexer(object):
 
         # tokenize text, add tokens to database
         for i, line in enumerate(file):
-            for token in tokenizer.generate_words_and_numbers(line):
+            for token in tokenizer.generate_AD(line):
                 self.db.setdefault(token.s, {}).setdefault(path, []).append(
                     Position.from_token(i, token)
                 )
@@ -120,11 +118,11 @@ class Indexer(object):
 
 def main():
     ind = Indexer("test_db")
-    with open('test.txt', 'tw') as f:
-        f.write('''test me please\ni have\nmany\nlines)))''')
-    ind.index("test.txt")
+    with open('test3.txt', 'tw') as f:
+        f.write('''Я не люблю красные бобы, белые бобы и бобы вообще. Противные бобы. Дурацкие бобы.''')
+    ind.index("test3.txt")
     print(dict(ind.db))
-    os.remove('test.txt')
+    os.remove('test3.txt')
     del ind
     for filename in os.listdir('.'):
         if filename.startswith("test_db."):

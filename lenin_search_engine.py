@@ -1,8 +1,113 @@
 import os
 import shelve
 from lenin_tokenizer import Tokenizer
+from lenin_indexer import Position
 
+class Context(object):
+    """
+    Class Context stores information about the context window of one or
+    several words
 
+    Attributes:
+        positions (list): list of positions of words for which the context 
+                          window was created
+        line (str): text of the line that contains the word
+        start (int): position of the first character of the context window
+        end (int): position after the last character of the context window
+    """
+    def __init__(self, positions, line, start, end):
+        """
+        Creates an instance of class Context given the values of its attributes.
+
+        Args:
+            positions (list): list of positions of words for which the context 
+                              window was created
+            line (str): text of the line that contains the word
+            start (int): position of the first character of the context window
+            end (int): position after the last character of the context window
+        """
+        self.positions = positions
+        self.line = line
+        self.start = start
+        self.end = end
+
+    @classmethod
+    def from_file(cls, filename, position, context_size):
+        """
+        Creates an instance of class Context from file.
+
+        Args:
+            filename (str): path to the file that contains the word.
+            position (Position): position of the word to find context for.
+            context_size (int): size of the context, number of words to the
+                                left and to the right of the word to include
+                                to the context window
+        Raises:
+            ValueError: in case any of the arguments is of the wrong type.
+        """
+        tok = Tokenizer()
+        if not (isinstance(filename, str)
+                and isinstance(position, Position)
+                and isinstance(context_size, int)):
+            raise ValueError
+
+        with open(filename) as f:
+            for i, line in enumerate(f):
+                if i == position.line:
+                    break
+        line = line.strip("\n")
+        positions = [position]        
+        right_context = line[position.start:]
+##        print(right_context)
+        left_context = line[:position.end][::-1]
+##        print(left_context)
+        
+        for i, token in enumerate(tok.generate_AD(left_context)):
+            if i == context_size:
+                break
+##        print(token)
+        start = position.end - token.pos - len(token.s)
+        for i, token in enumerate(tok.generate_AD(right_context)):
+            if i == context_size:
+                break
+##        print(token)
+        end = position.start + token.pos + len(token.s)
+        return cls(positions, line, start, end)
+
+    def isintersected(self, obj):
+        if self == obj:
+            return False
+        if (self.start < obj.end and
+            self.end > obj.start and
+            obj.line == self.line):
+            return True
+        else:
+            return False
+
+    def intersect(self, obj):
+        self.positions.extend(obj.positions)
+        self.start = min(self.start, obj.start)
+        self.end = max(self.end, obj.end)
+        return self
+
+    def __eq__(self, obj):
+        return ((self.positions == obj.positions) and
+                (self.line == obj.line) and
+                (self.start == obj.start) and
+                (self.end == obj.end))
+    
+    def __contains__(self, obj):
+        for position in obj.positions:
+            if position in self.positions:
+                b = True
+        return b and self.line == obj.line
+
+    def __repr__(self):
+        return str(self.positions)+ ', ' + str(self.start)+ ', ' \
+               + str(self.end)+ ', ' + self.line
+            
+
+        
 class SearchEngine(object):
     """
     Search Engine to perform search against a database. Each instance of
@@ -62,7 +167,7 @@ class SearchEngine(object):
             raise ValueError
         
         tokenizer = Tokenizer()
-        query = list(tokenizer.generate_words_and_numbers(query))
+        query = list(self.tok.generate_AD(query))
         simple_search_results = []
         for word in query:
             simple_search_results.append(set(self.simple_search(word.s)))
@@ -79,7 +184,51 @@ class SearchEngine(object):
                 final_result.setdefault(f, []).extend(self.db[word.s][f])
             final_result[f].sort()
         return final_result
+
+    def get_context_window(self, search_results, context_size):
+        """
+        This method creates a dictionary of files and contexts given a dictionary
+        of files and positions.
+
+        Args:
+            search_results (dict): a dictionary of files and positions.
+            context_size (int): size of context, number of words to the left and
+                                to the right of the word to include to the context
+                                window
+        Returns:
+            Dictionary of files and contexts in format {filename: [contexts]}
         
+        """
+        if not (isinstance(search_results, dict) and
+                isinstance(context_size, int)):
+            raise ValueError
+        
+        contexts_dict = {}
+        null = Context([], "", 0, 0)
+        for f, positions in search_results.items():
+            previous_context = null
+            for position in positions:
+                current_context = Context.from_file(f, position, context_size)
+                
+##                print("prev = ", previous_context)
+##                print("cur = ", current_context)
+##                print("inter = ", previous_context.isintersected(current_context))
+                if previous_context.isintersected(current_context):
+                    previous_context.intersect(current_context)
+##                    print("intersected")
+                else:
+                    if previous_context != null:
+                        contexts_dict.setdefault(f, []).append(previous_context)
+##                        print("appended")
+                    previous_context = current_context
+##                    print(contexts_dict)
+##            print("prev = ", previous_context)
+##            print("cur = ", current_context)
+            if current_context in previous_context:
+                contexts_dict.setdefault(f, []).append(previous_context)
+##            print(contexts_dict)
+        return contexts_dict
+                
     def __del__(self):
         self.db.close()
 
