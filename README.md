@@ -19,6 +19,23 @@ This class alows to tokenize a string of characters in multiple ways:
 
 This class allows to index a file line by line and write the indexes (line, position of first and last characters of the token) and the filename into a database. Thus you can index multiple files into one database.
 
+### SearchEngine
+
+Search engine that performs a search agains a database specified during initialisation.
+
+#### simple_search
+
+A primitive search that returns positions of a given token.
+
+#### multiword_search
+
+Performs a search of a multiword query against the database. Returns positions of all words of the query in a given file.
+
+### tolstoy_db
+
+A database of "War and Peace" by Lev Tolstoy in Russian is created for testing the search engine.
+
+
 ## Why
 
 This module is created as a practical work for my university programming course.

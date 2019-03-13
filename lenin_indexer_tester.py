@@ -35,23 +35,23 @@ class IndexerTest(unittest.TestCase):
             f.write("test")
         self.indexer.index("test.txt")
         self.assertEqual(dict(self.indexer.db),
-                         {'test': {'test.txt': [Position(0, 4, 0)]}})
+                         {'test': {'test.txt': [Position(0, 0, 4)]}})
         
     def test_two_identical_words(self):
         with open("test.txt", 'tw') as f:
             f.write("test test")
         self.indexer.index("test.txt")
         self.assertEqual(dict(self.indexer.db),
-                         {'test': {'test.txt': [Position(0, 4, 0),
-                                                Position(5, 9, 0)]}})
+                         {'test': {'test.txt': [Position(0, 0, 4),
+                                                Position(0, 5, 9)]}})
         
     def test_two_different_words(self):
         with open("test.txt", 'tw') as f:
             f.write("test case")
         self.indexer.index("test.txt")
         self.assertEqual(dict(self.indexer.db),
-                         {'test': {'test.txt': [Position(0, 4, 0)]},
-                          'case': {'test.txt': [Position(5, 9, 0)]}})
+                         {'test': {'test.txt': [Position(0, 0, 4)]},
+                          'case': {'test.txt': [Position(0, 5, 9)]}})
 
     def test_two_files(self):
         with open("test.txt", 'tw') as f:
@@ -61,19 +61,19 @@ class IndexerTest(unittest.TestCase):
         self.indexer.index("test.txt")
         self.indexer.index("test1.txt")
         self.assertEqual(dict(self.indexer.db),
-                         {'file': {'test.txt': [Position(0, 4, 0)],
-                                  'test1.txt': [Position(0, 4, 0)]},
-                          'one': {'test.txt': [Position(5, 8, 0)]},
-                          'two': {'test1.txt': [Position(5, 8, 0)]}})
+                         {'file': {'test.txt': [Position(0, 0, 4)],
+                                  'test1.txt': [Position(0, 0, 4)]},
+                          'one': {'test.txt': [Position(0, 5, 8)]},
+                          'two': {'test1.txt': [Position(0, 5, 8)]}})
 
     def test_multiple_lines(self):
         with open("test.txt", 'tw') as f:
             f.write("""test\nme\nplease""")
         self.indexer.index("test.txt")
         self.assertEqual(dict(self.indexer.db),
-                         {'test': {'test.txt': [Position(0, 4, 0)]},
-                          'me': {'test.txt': [Position(0, 2, 1)]},
-                          'please': {'test.txt': [Position(0, 6, 2)]}})
+                         {'test': {'test.txt': [Position(0, 0, 4)]},
+                          'me': {'test.txt': [Position(1, 0, 2)]},
+                          'please': {'test.txt': [Position(2, 0, 6)]}})
         
     def tearDown(self):
         del self.indexer
@@ -86,6 +86,5 @@ class IndexerTest(unittest.TestCase):
             os.remove('test.txt')
         
 
-    
 if __name__ == '__main__':
     unittest.main()
