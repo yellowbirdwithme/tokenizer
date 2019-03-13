@@ -286,13 +286,13 @@ class GenerateWithTypeTest(unittest.TestCase):
 
 class GenerateWordsAndNumbersTest(unittest.TestCase):
     """
-    Tests method generate_words_and_numbers of class Tokenizer
+    Tests method generate_AD of class Tokenizer
     """
     def setUp(self):
         self.tokenizer = Tokenizer()
 
     def test_all_types_of_token(self):
-        result = list(self.tokenizer.generate_words_and_numbers(
+        result = list(self.tokenizer.generate_AD(
             "I am very  tired, I want to go to sleep at 6:30!!!"))
         self.assertEqual(len(result), 13)
         self.assertEqual(result[0].s, 'I')

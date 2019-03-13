@@ -192,7 +192,7 @@ class Tokenizer(object):
         """
         return list(self.generate_with_type(text))
     
-    def generate_words_and_numbers(self,text):
+    def generate_AD(self,text):
         """
         Generator.
         Divides a string into TypeToken instances. Returns only those with type
