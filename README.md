@@ -35,6 +35,7 @@ Performs a search of a multiword query against the database. Returns positions o
 
 A database of "War and Peace" by Lev Tolstoy in Russian is created for testing the search engine.
 
+
 ## Why
 
 This module is created as a practical work for my university programming course.

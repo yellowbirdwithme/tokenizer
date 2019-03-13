@@ -3,6 +3,7 @@ This module allows to index a string of characters.
 """
 import shelve
 import os
+
 from functools import total_ordering
 from lenin_tokenizer import Tokenizer
 
@@ -40,8 +41,9 @@ class Position(object):
             token (Token): token to get the position of.
             line (int): line in which the token is.
         """
+
         return cls(line, token.pos, token.pos + len(token.s))
-    
+
     def __eq__(self, obj):
         """
         Checks if two instances of class Position are equal.
@@ -67,8 +69,8 @@ class Position(object):
     def __repr__(self):
         return '(' + str(self.line) + ',' + str(self.start) + ',' + \
                 str(self.end) + ")" 
+
         
-    
 class Indexer(object):
     """
     Class Indexer allows to index files and write the indexes of tokens into a
