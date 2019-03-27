@@ -49,64 +49,60 @@ class Context(object):
         if not (isinstance(filename, str)
                 and isinstance(position, Position)
                 and isinstance(context_size, int)):
-            raise ValueError
+            raise ValueError('Wrong line number')
 
         with open(filename) as f:
             for i, line in enumerate(f):
                 if i == position.line:
                     break
+        if i!= position.line:
+            raise ValueError
         line = line.strip("\n")
         positions = [position]        
         right_context = line[position.start:]
-##        print(right_context)
         left_context = line[:position.end][::-1]
-##        print(left_context)
         
         for i, token in enumerate(tok.generate_AD(left_context)):
             if i == context_size:
                 break
-##        print(token)
         start = position.end - token.pos - len(token.s)
         for i, token in enumerate(tok.generate_AD(right_context)):
             if i == context_size:
                 break
-##        print(token)
         end = position.start + token.pos + len(token.s)
         return cls(positions, line, start, end)
 
     def isintersected(self, obj):
-        if self == obj:
-            return False
-        if (self.start < obj.end and
-            self.end > obj.start and
-            obj.line == self.line):
-            return True
-        else:
-            return False
+        """
+        This method checks if two context windows intersect.
+        """
+        return (self.start <= obj.end and
+                self.end >= obj.start and
+                obj.line == self.line)
 
-    def intersect(self, obj):
-        self.positions.extend(obj.positions)
+    def join(self, obj):
+        """
+        This method joins two context windows by changing self.
+        """
+        for position in obj.positions:
+            if position not in self.positions:
+                self.positions.append(position)
         self.start = min(self.start, obj.start)
         self.end = max(self.end, obj.end)
-        return self
-
+        
     def __eq__(self, obj):
+        """
+        Check if two context windows are equal.
+        """
         return ((self.positions == obj.positions) and
                 (self.line == obj.line) and
                 (self.start == obj.start) and
                 (self.end == obj.end))
-    
-    def __contains__(self, obj):
-        for position in obj.positions:
-            if position in self.positions:
-                b = True
-        return b and self.line == obj.line
 
     def __repr__(self):
         return str(self.positions)+ ', ' + str(self.start)+ ', ' \
                + str(self.end)+ ', ' + self.line
             
-
         
 class SearchEngine(object):
     """
@@ -197,7 +193,6 @@ class SearchEngine(object):
                                 window
         Returns:
             Dictionary of files and contexts in format {filename: [contexts]}
-        
         """
         if not (isinstance(search_results, dict) and
                 isinstance(context_size, int)):
@@ -210,23 +205,13 @@ class SearchEngine(object):
             for position in positions:
                 current_context = Context.from_file(f, position, context_size)
                 
-##                print("prev = ", previous_context)
-##                print("cur = ", current_context)
-##                print("inter = ", previous_context.isintersected(current_context))
                 if previous_context.isintersected(current_context):
-                    previous_context.intersect(current_context)
-##                    print("intersected")
+                    previous_context.join(current_context)
                 else:
-                    if previous_context != null:
+                    if previous_context is not null:
                         contexts_dict.setdefault(f, []).append(previous_context)
-##                        print("appended")
                     previous_context = current_context
-##                    print(contexts_dict)
-##            print("prev = ", previous_context)
-##            print("cur = ", current_context)
-            if current_context in previous_context:
-                contexts_dict.setdefault(f, []).append(previous_context)
-##            print(contexts_dict)
+            contexts_dict.setdefault(f, []).append(previous_context)
         return contexts_dict
                 
     def __del__(self):
