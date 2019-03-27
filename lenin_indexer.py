@@ -1,5 +1,5 @@
 """
-This module allows to index a string of characters.
+This module allows to index files into a database.
 """
 import shelve
 import os

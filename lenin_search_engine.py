@@ -1,3 +1,7 @@
+"""
+This module allows to search in a database and create context windows for further
+rpresentation of search results.
+"""
 import os
 import shelve
 from lenin_tokenizer import Tokenizer
