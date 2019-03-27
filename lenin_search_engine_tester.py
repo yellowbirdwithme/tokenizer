@@ -142,6 +142,7 @@ class ContextFromFileTest(unittest.TestCase):
     """
     Tests from_file classmethod of class Context.
     """
+
     def setUp(self):
         with open("test.txt", 'w') as f:
             f.write(TEST)
@@ -205,6 +206,7 @@ class ContextFromFileTest(unittest.TestCase):
     def tearDown(self):
         os.remove("test.txt")
         os.remove("test1.txt")
+
 
 class JoinContextWindowsTest(unittest.TestCase):
     """

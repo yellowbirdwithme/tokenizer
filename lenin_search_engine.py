@@ -103,6 +103,7 @@ class Context(object):
         return str(self.positions)+ ', ' + str(self.start)+ ', ' \
                + str(self.end)+ ', ' + self.line
             
+
         
 class SearchEngine(object):
     """
@@ -193,6 +194,7 @@ class SearchEngine(object):
                                 window
         Returns:
             Dictionary of files and contexts in format {filename: [contexts]}
+
         """
         if not (isinstance(search_results, dict) and
                 isinstance(context_size, int)):
@@ -203,8 +205,7 @@ class SearchEngine(object):
         for f, positions in search_results.items():
             previous_context = null
             for position in positions:
-                current_context = Context.from_file(f, position, context_size)
-                
+                current_context = Context.from_file(f, position, context_size
                 if previous_context.isintersected(current_context):
                     previous_context.join(current_context)
                 else:
@@ -212,6 +213,7 @@ class SearchEngine(object):
                         contexts_dict.setdefault(f, []).append(previous_context)
                     previous_context = current_context
             contexts_dict.setdefault(f, []).append(previous_context)
+
         return contexts_dict
                 
     def __del__(self):
