@@ -211,7 +211,7 @@ class ContextFromFileTest(unittest.TestCase):
 class JoinContextWindowsTest(unittest.TestCase):
     """
     Tests method join of class ContextWindow and method
-    get_context_window of class SearchEngine.
+    get_context_windows of class SearchEngine.
     """
     def setUp(self):
         self.se = SearchEngine("test_db")
@@ -239,24 +239,24 @@ class JoinContextWindowsTest(unittest.TestCase):
 
     def test_wrong_input_error(self):
         with self.assertRaises(ValueError):
-            self.se.get_context_window(3, 3)
+            self.se.get_context_windows(3, 3)
     
     def test_output_type(self):
-        result = self.se.get_context_window(self.search_result1, 1)
+        result = self.se.get_context_windows(self.search_result1, 1)
         self.assertIsInstance(result, dict)
         
     def test_empty_input(self):
-        result = self.se.get_context_window({}, 3)
+        result = self.se.get_context_windows({}, 3)
         self.assertEqual(result, {})
         
     def test_zero_context(self):
-        result = self.se.get_context_window(self.search_result1, 0)
+        result = self.se.get_context_windows(self.search_result1, 0)
         ideal = {'test.txt': [Context([Position(0, 8, 9)],
                                                 TEST[0:19], 8, 9)]}
         self.assertEqual(result, ideal)
         
     def test_two_words_intersection(self):
-        result = self.se.get_context_window(self.search_result3, 2)
+        result = self.se.get_context_windows(self.search_result3, 2)
         ideal = {'test.txt': [Context([Position(0, 10, 14)],
                                       TEST[0:19], 5, 19),
                               Context([Position(1, 6, 8),

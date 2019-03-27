@@ -3,6 +3,7 @@ import shelve
 from lenin_tokenizer import Tokenizer
 from lenin_indexer import Position
 
+
 class Context(object):
     """
     Class Context stores information about the context window of one or
@@ -49,14 +50,14 @@ class Context(object):
         if not (isinstance(filename, str)
                 and isinstance(position, Position)
                 and isinstance(context_size, int)):
-            raise ValueError('Wrong line number')
+            raise ValueError
 
         with open(filename) as f:
             for i, line in enumerate(f):
                 if i == position.line:
                     break
-        if i!= position.line:
-            raise ValueError
+        if i != position.line:
+            raise ValueError('Wrong line number')
         line = line.strip("\n")
         positions = [position]        
         right_context = line[position.start:]
@@ -182,7 +183,7 @@ class SearchEngine(object):
             final_result[f].sort()
         return final_result
 
-    def get_context_window(self, search_results, context_size):
+    def get_context_windows(self, search_results, context_size):
         """
         This method creates a dictionary of files and contexts given a dictionary
         of files and positions.
@@ -205,7 +206,7 @@ class SearchEngine(object):
         for f, positions in search_results.items():
             previous_context = null
             for position in positions:
-                current_context = Context.from_file(f, position, context_size
+                current_context = Context.from_file(f, position, context_size)
                 if previous_context.isintersected(current_context):
                     previous_context.join(current_context)
                 else:
