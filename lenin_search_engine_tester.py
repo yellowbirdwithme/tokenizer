@@ -139,7 +139,10 @@ class MultiwordSearchTest(unittest.TestCase):
                 os.remove(filename)
 
 class ContextFromFileTest(unittest.TestCase):
-    """This is to test from_file classmethod of class Context"""
+    """
+    Tests from_file classmethod of class Context.
+    """
+
     def setUp(self):
         with open("test.txt", 'w') as f:
             f.write(TEST)
@@ -196,11 +199,20 @@ class ContextFromFileTest(unittest.TestCase):
         self.assertEqual(result.end, 9)
         self.assertEqual(result.line, "this is a test text")
 
+    def test_wrong_line_number(self):
+        with self.assertRaises(ValueError):
+            Context.from_file("test.txt", Position(7, 8, 9), 2)
+
     def tearDown(self):
         os.remove("test.txt")
         os.remove("test1.txt")
 
-class IntersectContextTest(unittest.TestCase):
+
+class JoinContextWindowsTest(unittest.TestCase):
+    """
+    Tests method join of class ContextWindow and method
+    get_context_window of class SearchEngine.
+    """
     def setUp(self):
         self.se = SearchEngine("test_db")
         self.se.db.update(DB)
@@ -260,13 +272,30 @@ class IntersectContextTest(unittest.TestCase):
         b = Context([Position(0, 8, 9)], TEST[0:19], 8, 9)
         self.assertEqual(a,b)
 
-    def test_intersect(self):
+    def test_join(self):
         a = Context([Position(0, 13, 15)], TEST1, 0, 24)
         b = Context([Position(0,16,20)], TEST1, 0, 31)
-        self.assertEqual(a.intersect(b), Context([Position(0, 13, 15),
+        a.join(b)
+        self.assertEqual(a, Context([Position(0, 13, 15),
                                           Position(0, 16, 20)],
                                          TEST1, 0, 31))
 
+    def test_join_equal_windoows(self):
+        a = Context([Position(0, 13, 15)], TEST1, 0, 24)
+        b = Context([Position(0, 13, 15)], TEST1, 0, 24)
+        a.join(b)
+        self.assertEqual(a, Context([Position(0, 13, 15)], TEST1, 0, 24))
+
+    def test_isintersected_equal_sets(self):
+        a = Context([Position(0, 13, 15)], TEST1, 0, 24)
+        b = Context([Position(0, 13, 15)], TEST1, 0, 24)
+        self.assertTrue(a.isintersected(b))
+
+    def test_join_inclusion_sets(self):
+        a = Context([Position(0, 13, 15)], TEST1, 0, 24)
+        b = Context([Position(0, 13, 15)], TEST1, 3, 20)
+        a.join(b)
+        self.assertEqual(a, Context([Position(0, 13, 15)], TEST1, 0, 24))
 
     def tearDown(self):
         del self.se
