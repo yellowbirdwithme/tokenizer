@@ -115,6 +115,19 @@ class Context(object):
                 self.end += boundary_r.search(right).start() + 1
             except:
                 self.end = len(self.line)
+
+    def cut_and_highlight(self):
+        """
+"""
+        quote = self.line[self.start:self.end]
+        cl = '</b>'
+        op = '<b>'
+        for position in reversed(self.positions):
+            end = position.end - self.start
+            start = position.start - self.start
+            quote = quote[:end] + cl + quote[end:]
+            quote = quote[:start] + op + quote[start:]
+        return quote
         
     def __eq__(self, obj):
         """
@@ -209,7 +222,7 @@ class SearchEngine(object):
 
     def get_context_windows(self,
                             input_dict,
-                            context_size = 3):
+                            context_size=3):
         """
         This method creates a dictionary of files and contexts given a
         dictionary of files and positions.
@@ -264,7 +277,28 @@ class SearchEngine(object):
 
         return contexts_dict
 
-    def search_to_sentence(self, query, context_size = 3):
+    def search_to_context(self, query, context_size=3):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary of files, that contain all the words of the query. If any
+        of the words of the query is not in the database, no files will be
+        found.
+        The values in the dictionary are contexts of the found words joined
+        if intersecting each other.
+
+        Args:
+            query (str): search query
+            context_size (int): size of the context window
+
+        Returns:
+            Dictionary of files and contexts of all the words of the query
+            in a given file in the format {filename: [contexts]}
+        """
+        positions_dict = self.multiword_search(query)
+        context_dict = self.get_context_windows(positions_dict, context_size)
+        return context_dict
+
+    def search_to_sentence(self, query, context_size=3):
         """
         Performs a search of a multiword query against the database. Returns
         a dictionary of files, that contain all the words of the query. If any
@@ -289,6 +323,32 @@ class SearchEngine(object):
                 context.to_sentence()
         sentence_dict = self.join_contexts(context_dict)
         return sentence_dict
+
+    def search_to_quote(self, query, context_size=3):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary of files, that contain all the words of the query. If any
+        of the words of the query is not in the database, no files will be
+        found.
+        The values in the dictionary are quotes with found words surrounded by
+        <b></b> HTML tags.
+
+        Args:
+            query (str): search query
+            context_size (int): size of the initial context window built for
+                                search results
+
+        Returns:
+            Dictionary of files and quotes of all the words of the query
+            in a given file in the format {filename: [quotes(str)]}
+        """
+        sentence_dict = self.search_to_sentence(query, context_size)
+        quote_dict = {}
+        for f, contexts in sentence_dict.items():
+            for context in contexts:
+                quote_dict.setdefault(f, []).append(context.cut_and_highlight())
+        return quote_dict
+        
                 
     def __del__(self):
         self.db.close()

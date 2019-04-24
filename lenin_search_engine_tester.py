@@ -210,8 +210,8 @@ class ContextFromFileTest(unittest.TestCase):
 
 class JoinContextWindowsTest(unittest.TestCase):
     """
-    Tests method join of class ContextWindow and method
-    get_context_windows of class SearchEngine.
+    Tests method join of class ContextWindow and methods
+    get_context_windows and search_to_context of class SearchEngine.
     """
     def setUp(self):
         self.se = SearchEngine("test_db")
@@ -296,6 +296,15 @@ class JoinContextWindowsTest(unittest.TestCase):
         b = Context([Position(0, 13, 15)], TEST1, 3, 20)
         a.join(b)
         self.assertEqual(a, Context([Position(0, 13, 15)], TEST1, 0, 24))
+
+    def test_search_to_context(self):
+        result = self.se.search_to_context("to test")
+        ideal = {'test.txt': [Context([Position(0, 10, 14)], TEST[:19], 0, 19),
+                              Context([Position(1, 6, 8),
+                                       Position(1, 9, 13)], TEST[20:], 0, 27)],
+                 'test1.txt': [Context([Position(0, 13, 15),
+                                        Position(0, 16, 20)], TEST1, 0, 38)]}
+        self.assertEqual(result, ideal)
 
     def tearDown(self):
         del self.se
@@ -383,6 +392,77 @@ class SentenceContextWindowTest(unittest.TestCase):
         result = self.se.search_to_sentence(query, 0)
         ideal = {'test3.txt': [Context([Position(0, 0, 1)], TEST3, 0, 50),
                                Context([Position(0, 67, 75)], TEST3, 67, 81)]}
+        self.assertEqual(result, ideal)
+
+    def tearDown(self):
+        del self.se
+        for filename in os.listdir('.'):
+            if filename.startswith("test_db."):
+                os.remove(filename)
+        os.remove("test3.txt")
+
+
+class WindowToQuoteTest(unittest.TestCase):
+    """
+    Tests method cut_and_highlight of class Context and method search_to_quote
+    of class SearchEngine.
+    """
+    def setUp(self):
+        self.se = SearchEngine("test_db")
+        self.se.db.update(DB)
+        with open("test3.txt", 'w') as f:
+            f.write(TEST3)
+
+    def test_short_context(self):
+        # engine +1
+        context = Context([Position(0, 32, 38)], TEST1, 25, 38)
+        result = context.cut_and_highlight()
+        self.assertEqual(result, 'search <b>engine</b>')
+
+    def test_whole_line(self):
+        # Дурацкие вообще
+        context = Context([Position(0, 43, 49), Position(0, 67, 75)],
+                          TEST3, 0, 81)
+        result = context.cut_and_highlight()
+        ideal = 'Я не люблю красные бобы, белые бобы и бобы <b>вообще</b>. Противные бобы. <b>Дурацкие</b> бобы.'
+        self.assertEqual(result, ideal)
+
+    def test_part_of_line(self):
+        #Я
+        context = Context([Position(0, 0, 1)], TEST3, 0, 50)
+        result = context.cut_and_highlight()
+        ideal = '<b>Я</b> не люблю красные бобы, белые бобы и бобы вообще.'
+        self.assertEqual(result, ideal)
+
+    def test_many_words(self):
+        #бобы
+        context = Context([Position(0, 19, 23),
+                             Position(0, 31, 35),
+                             Position(0, 38, 42),
+                             Position(0, 61, 65),
+                             Position(0, 76, 80)],
+                           TEST3, 0, 81)
+        result = context.cut_and_highlight()
+        ideal = "Я не люблю красные <b>бобы</b>, белые <b>бобы</b> и <b>бобы</b> вообще. Противные <b>бобы</b>. Дурацкие <b>бобы</b>."
+        self.assertEqual(result, ideal)
+
+    def test_search_to_quote(self):
+        query = "Дурацкие вообще"
+        result = self.se.search_to_quote(query)
+        ideal = {'test3.txt': ['Я не люблю красные бобы, белые бобы и бобы <b>вообще</b>. Противные бобы. <b>Дурацкие</b> бобы.']}
+        self.assertEqual(result, ideal)
+
+    def test_search_to_quote_2(self):
+        query = "Я Дурацкие"
+        result = self.se.search_to_quote(query, 0)
+        ideal = {'test3.txt': ["<b>Я</b> не люблю красные бобы, белые бобы и бобы вообще.",
+                               "<b>Дурацкие</b> бобы."]}
+        self.assertEqual(result, ideal)
+
+    def test_search_to_quote_3(self):
+        query = "красные бобы"
+        result = self.se.search_to_quote(query)
+        ideal = {'test3.txt': ["Я не люблю <b>красные</b> <b>бобы</b>, белые <b>бобы</b> и <b>бобы</b> вообще. Противные <b>бобы</b>. Дурацкие <b>бобы</b>."]}
         self.assertEqual(result, ideal)
 
     def tearDown(self):
