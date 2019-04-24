@@ -118,7 +118,12 @@ class Context(object):
 
     def cut_and_highlight(self):
         """
-"""
+        Creates a string that represents context. Query words are 'highlighted'
+        i.e. surrounded by HTML tags <b></b>.
+
+        Returns:
+            String cut to size of the context with query words highlighted.
+        """
         quote = self.line[self.start:self.end]
         cl = '</b>'
         op = '<b>'
