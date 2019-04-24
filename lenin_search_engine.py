@@ -266,15 +266,27 @@ class SearchEngine(object):
 
     def search_to_sentence(self, query, context_size = 3):
         """
-"""
+        Performs a search of a multiword query against the database. Returns
+        a dictionary of files, that contain all the words of the query. If any
+        of the words of the query is not in the database, no files will be
+        found.
+        The values in the dictionary are contexts of the found words extended to
+        the sentence boundaries and joined if intersecting each other.
+
+        Args:
+            query (str): search query
+            context_size (int): size of the initial context window built for
+                                search results
+
+        Returns:
+            Dictionary of files and contexts of all the words of the query
+            in a given file in the format {filename: [contexts]}
+        """
         positions_dict = self.multiword_search(query)
-##        print(positions_dict)
         context_dict = self.get_context_windows(positions_dict, context_size)
-##        print(context_dict)
         for contexts in context_dict.values():
             for context in contexts:
                 context.to_sentence()
-##        print(context_dict)
         sentence_dict = self.join_contexts(context_dict)
         return sentence_dict
                 
