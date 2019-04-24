@@ -316,8 +316,7 @@ class SearchEngine(object):
             Dictionary of files and contexts of all the words of the query
             in a given file in the format {filename: [contexts]}
         """
-        positions_dict = self.multiword_search(query)
-        context_dict = self.get_context_windows(positions_dict, context_size)
+        context_dict = self.search_to_context(query, context_size)
         for contexts in context_dict.values():
             for context in contexts:
                 context.to_sentence()
