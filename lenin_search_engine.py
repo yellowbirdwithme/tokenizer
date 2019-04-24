@@ -3,6 +3,7 @@ This module allows to search in a database and create context windows for furthe
 rpresentation of search results.
 """
 import os
+import re
 import shelve
 from lenin_tokenizer import Tokenizer
 from lenin_indexer import Position
@@ -54,7 +55,7 @@ class Context(object):
         if not (isinstance(filename, str)
                 and isinstance(position, Position)
                 and isinstance(context_size, int)):
-            raise ValueError
+            raise ValueError (filename, position, context_size)
 
         with open(filename) as f:
             for i, line in enumerate(f):
@@ -94,6 +95,26 @@ class Context(object):
                 self.positions.append(position)
         self.start = min(self.start, obj.start)
         self.end = max(self.end, obj.end)
+
+    def to_sentence(self):
+        """
+        This method expands the boundaries of the context window up to the
+        sentence boundaries.
+        """
+        boundary_r = re.compile(r'[.!?] [A-ZА-Я]')
+        boundary_l = re.compile(r'[A-ZА-Я] [.!?]')
+        right = self.line[self.end:]
+        left = self.line[:self.start+1][::-1]        
+        if left:
+            try:
+                self.start = self.start - boundary_l.search(left).start()
+            except:
+                self.start = 0
+        if right:
+            try:
+                self.end += boundary_r.search(right).start() + 1
+            except:
+                self.end = len(self.line)
         
     def __eq__(self, obj):
         """
@@ -108,7 +129,6 @@ class Context(object):
         return str(self.positions)+ ', ' + str(self.start)+ ', ' \
                + str(self.end)+ ', ' + self.line
             
-
         
 class SearchEngine(object):
     """
@@ -187,36 +207,59 @@ class SearchEngine(object):
             final_result[f].sort()
         return final_result
 
-    def get_context_windows(self, search_results, context_size):
+    def get_context_windows(self,
+                            input_dict,
+                            context_size = 3):
         """
-        This method creates a dictionary of files and contexts given a dictionary
-        of files and positions.
+        This method creates a dictionary of files and contexts given a
+        dictionary of files and positions.
 
         Args:
             search_results (dict): a dictionary of files and positions.
             context_size (int): size of context, number of words to the left and
                                 to the right of the word to include to the context
                                 window
+            
         Returns:
             Dictionary of files and contexts in format {filename: [contexts]}
 
         """
-        if not (isinstance(search_results, dict) and
+        if not (isinstance(input_dict, dict) and
                 isinstance(context_size, int)):
             raise ValueError
         
         contexts_dict = {}
-        null = Context([], "", 0, 0)
-        for f, positions in search_results.items():
-            previous_context = null
+        
+        for f, positions in input_dict.items():
             for position in positions:
-                current_context = Context.from_file(f, position, context_size)
-                if previous_context.isintersected(current_context):
-                    previous_context.join(current_context)
+                context = Context.from_file(f, position, context_size)
+                contexts_dict.setdefault(f, []).append(context)
+
+        joined_contexts_dict = self.join_contexts(contexts_dict)
+
+        return joined_contexts_dict
+
+    def join_contexts(self, input_dict):
+        """
+        This method joins intersecting windows in a dictionary of files and
+        context windows.
+
+        Args:
+            input_dict (dict): a dictionary of files and context windows of the
+                               following structure {file: [contexts]}
+        Returns a dictionary of files and joined contexts {file: [contexts]}
+        """
+        contexts_dict = {}
+        null = Context([], "", 0, 0)
+        for f, contexts in input_dict.items():
+            previous_context = null
+            for context in contexts:
+                if previous_context.isintersected(context):
+                    previous_context.join(context)
                 else:
                     if previous_context is not null:
                         contexts_dict.setdefault(f, []).append(previous_context)
-                    previous_context = current_context
+                    previous_context = context
             contexts_dict.setdefault(f, []).append(previous_context)
 
         return contexts_dict

@@ -306,6 +306,72 @@ class JoinContextWindowsTest(unittest.TestCase):
         os.remove("test1.txt")
         os.remove("test3.txt")
 
+
+class SentenceContextWindowTest(unittest.TestCase):
+    """
+    Tests method to_sentence of class Context.
+    """
+    def setUp(self):
+        self.se = SearchEngine("test_db")
+        self.se.db.update(DB)
+        
+    def test_middle_of_sentence(self):
+        # бобы +1
+        context = Context([Position(0, 19, 23),
+                           Position(0, 31, 35),
+                           Position(0, 38, 42)],
+                          TEST3, 11, 49)
+        context.to_sentence()
+        ideal = Context([Position(0, 19, 23),
+                         Position(0, 31, 35),
+                         Position(0, 38, 42)],
+                        TEST3, 0, 50)
+        self.assertEqual(context, ideal)
+        
+    def test_end_of_sentence(self):
+        #(Дурацкие) бобы +0
+        context = Context([Position(0, 76, 80)], TEST3, 76, 80)
+        context.to_sentence()
+        ideal = Context([Position(0, 76, 80)], TEST3, 67, 81)
+        self.assertEqual(context, ideal)
+        
+    def test_beginning_of_sentence(self):
+        # Противные +0
+        context = Context([Position(0, 51, 60)], TEST3, 51, 60)
+        context.to_sentence()
+        ideal = Context([Position(0, 51, 60)], TEST3, 51, 66)
+        self.assertEqual(context, ideal)
+    
+    def test_beginning_of_the_line(self):
+        # Я +2
+        context = Context([Position(0, 0, 1)], TEST3, 0, 10)
+        context.to_sentence()
+        ideal = Context([Position(0, 0, 1)], TEST3, 0, 50)
+        self.assertEqual(context, ideal)
+        
+    def test_end_of_the_line(self):
+        # engine +1
+        context = Context([Position(0, 32, 38)], TEST1, 25, 38)
+        context.to_sentence()
+        ideal = Context([Position(0, 32, 38)], TEST1, 0, 38)
+        
+    def test_join_two_contexts(self):
+        input_dict = {'test3.txt': [Context([Position(0, 43, 49)],
+                                            TEST3, 0, 66),
+                                    Context([Position(0, 67, 75)],
+                                            TEST3, 51, 81)]}
+        ideal = {'test3.txt': [Context([Position(0, 43, 49),
+                                        Position(0, 67, 75)],
+                                       TEST3, 0, 81)]}
+        result = self.se.join_contexts(input_dict)
+        self.assertEqual(result, ideal)
+
+    def tearDown(self):
+        del self.se
+        for filename in os.listdir('.'):
+            if filename.startswith("test_db."):
+                os.remove(filename)
+
                         
 if __name__ == '__main__':
     unittest.main()
