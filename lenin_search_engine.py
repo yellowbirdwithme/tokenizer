@@ -263,6 +263,20 @@ class SearchEngine(object):
             contexts_dict.setdefault(f, []).append(previous_context)
 
         return contexts_dict
+
+    def search_to_sentence(self, query, context_size = 3):
+        """
+"""
+        positions_dict = self.multiword_search(query)
+##        print(positions_dict)
+        context_dict = self.get_context_windows(positions_dict, context_size)
+##        print(context_dict)
+        for contexts in context_dict.values():
+            for context in contexts:
+                context.to_sentence()
+##        print(context_dict)
+        sentence_dict = self.join_contexts(context_dict)
+        return sentence_dict
                 
     def __del__(self):
         self.db.close()

@@ -309,11 +309,14 @@ class JoinContextWindowsTest(unittest.TestCase):
 
 class SentenceContextWindowTest(unittest.TestCase):
     """
-    Tests method to_sentence of class Context.
+    Tests method to_sentence of class Context and search_to_sentence of class
+    Search Engine.
     """
     def setUp(self):
         self.se = SearchEngine("test_db")
         self.se.db.update(DB)
+        with open("test3.txt", 'w') as f:
+            f.write(TEST3)
         
     def test_middle_of_sentence(self):
         # бобы +1
@@ -356,6 +359,7 @@ class SentenceContextWindowTest(unittest.TestCase):
         ideal = Context([Position(0, 32, 38)], TEST1, 0, 38)
         
     def test_join_two_contexts(self):
+        # вообще Дурацкие
         input_dict = {'test3.txt': [Context([Position(0, 43, 49)],
                                             TEST3, 0, 66),
                                     Context([Position(0, 67, 75)],
@@ -366,11 +370,27 @@ class SentenceContextWindowTest(unittest.TestCase):
         result = self.se.join_contexts(input_dict)
         self.assertEqual(result, ideal)
 
+    def test_search_to_sentence(self):
+        query = "Дурацкие вообще"
+        result = self.se.search_to_sentence(query)
+        ideal = {'test3.txt': [Context([Position(0, 43, 49),
+                                        Position(0, 67, 75)],
+                                       TEST3, 0, 81)]}
+        self.assertEqual(result, ideal)
+
+    def test_search_to_sentence_2(self):
+        query = "Я Дурацкие"
+        result = self.se.search_to_sentence(query, 0)
+        ideal = {'test3.txt': [Context([Position(0, 0, 1)], TEST3, 0, 50),
+                               Context([Position(0, 67, 75)], TEST3, 67, 81)]}
+        self.assertEqual(result, ideal)
+
     def tearDown(self):
         del self.se
         for filename in os.listdir('.'):
             if filename.startswith("test_db."):
                 os.remove(filename)
+        os.remove("test3.txt")
 
                         
 if __name__ == '__main__':
