@@ -215,7 +215,7 @@ class SearchEngine(object):
         if not simple_search_results:
             return {}
         
-        files_found = simple_search_results[1]
+        files_found = simple_search_results[0]
         for result in simple_search_results:
             files_found.intersection_update(result)
         final_result = {}
