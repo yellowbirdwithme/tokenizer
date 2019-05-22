@@ -31,9 +31,9 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
         Seends search results in response to the search query.
         """
         print("here")
-        form = cgi.FieldStorage(fp = self.rfile,
-                            headers = self.headers,
-                            environ ={'REQUEST_METHOD':'POST'})
+        form = cgi.FieldStorage(fp=self.rfile,
+                            headers=self.headers,
+                            environ={'REQUEST_METHOD': 'POST'})
         print("got form")
         query = str(form.getvalue("query"))
         se = SearchEngine("tolstoy_db")
@@ -44,12 +44,15 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-type", "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(bytes("""
-            <body>
-                <form method="post">
-                    <input type="text" name="query" value="%s"/>
-                    <input type="submit" value="Search"/>
-                </form>""" % query, encoding="UTF-8"))
+                <html>
+                    <body>
+                        <form method="post">
+                            <input type="text" name="query" value="%s"/>
+                            <input type="submit" value="Search"/>
+                        </form>""" % query, encoding="UTF-8"))
         self.wfile.write(bytes("<ol>", encoding="UTF-8"))
+        if not result:
+            self.wfile.write(bytes("Nothing found", encoding="UTF-8"))
         for f in result:
             self.wfile.write(bytes("<li><p>%s</p></li>" % f, encoding="UTF-8"))
             self.wfile.write(bytes("<ul>", encoding="UTF-8"))
@@ -58,7 +61,7 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(bytes("<li><p>%s</p></li>" % quote,
                                        encoding="UTF-8"))
             self.wfile.write(bytes("</ul>", encoding="UTF-8"))
-        self.wfile.write(bytes("</ol>", encoding="UTF-8"))         
+        self.wfile.write(bytes("""</ol></body></html>""", encoding="UTF-8"))
         
 
 def main():
