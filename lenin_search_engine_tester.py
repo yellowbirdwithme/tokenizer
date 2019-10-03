@@ -472,6 +472,111 @@ class WindowToQuoteTest(unittest.TestCase):
                 os.remove(filename)
         os.remove("test3.txt")
 
+
+class SearchLimitTest(unittest.TestCase):
+    def setUp(self):
+        self.se = SearchEngine("test_db")
+        self.se.db.update(DB)
+        with open("test.txt", 'w') as f:
+            f.write(TEST)
+        with open("test1.txt", 'w') as f:
+            f.write(TEST1)
+        with open("test3.txt", 'w') as f:
+            f.write(TEST3)
+
+    def test_default(self):
+        # default limit = 10
+        # default offset = 0
+        # default doclo = [(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query)
+        ideal = {'test.txt': ['this is a <b>test</b> text',
+                              'it is to <b>test</b> search engine'],
+                 'test1.txt': ['another text to <b>test</b> the search engine']}
+        self.assertEqual(result, ideal)
+
+    def test_one(self):
+        # limit = 1
+        # offset = 0
+        # doclo = [(1,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query,
+                                               limit=1,
+                                               offset=0,
+                                               doclo=[(1,0)])
+        ideal = {'test.txt':
+                 ['this is a <b>test</b> text']}
+        self.assertEqual(result, ideal)
+
+    def test_two(self):
+        # limit = 1
+        # offset = 1
+        # doclo = [(1,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query,
+                                               limit=1,
+                                               offset=1,
+                                               doclo=[(1,0)])
+        ideal = {'test1.txt': ['another text to <b>test</b> the search engine']}
+        self.assertEqual(result, ideal)
+
+    def test_three(self):
+        # limit = 0
+        # offset = 1
+        # doclo = [(1,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query,
+                                               limit=0,
+                                               offset=1,
+                                               doclo=[(1,0)])
+        ideal = {}
+        self.assertEqual(result, ideal)
+
+    def test_four(self):
+        # limit = 2
+        # offset = 1
+        # doclo = [(3,1), (3,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query,
+                                      limit=2,
+                                      offset=1,
+                                      doclo=[(3,1), (3,0)])
+        ideal = {'test1.txt': []}
+        self.assertEqual(result, ideal)
+
+    def test_five(self):
+        # limit = 2
+        # offset = 2
+        # doclo = [(3,1), (3,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query,
+                                               limit=2,
+                                               offset=2,
+                                               doclo=[(3,1), (3,0)])
+        ideal = {}
+        self.assertEqual(result, ideal)
+
+    def test_six(self):
+        # limit = 2
+        # offset = 0
+        # doclo = [(3,1),(3,0)]
+        query = "test"
+        result = self.se.search_to_quote_limit(query,
+                                               limit=2,
+                                               offset=0,
+                                               doclo=[(3,1), (3,0)])
+        ideal = {'test.txt': ['it is to <b>test</b> search engine'],
+                 'test1.txt': ['another text to <b>test</b> the search engine']}
+        self.assertEqual(result, ideal)
+            
+    def tearDown(self):
+        del self.se
+        for filename in os.listdir('.'):
+            if filename.startswith("test_db."):
+                os.remove(filename)
+        os.remove("test.txt")
+        os.remove("test1.txt")
+        os.remove("test3.txt")
                         
 if __name__ == '__main__':
     unittest.main()

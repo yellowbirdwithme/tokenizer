@@ -352,7 +352,40 @@ class SearchEngine(object):
             for context in contexts:
                 quote_dict.setdefault(f, []).append(context.cut_and_highlight())
         return quote_dict
-        
+
+    def search_to_quote_limit(self, query, context_size=3, limit=10, offset=0,
+                     doclo=[(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0)]):
+        """
+        Args:
+            query (str): search query
+            context_size (int): size of the initial context window built for
+                    search results
+            limit (int): max number of documents
+            offset (int): numder of the first document to return
+            doclo: list of pairs that indicate limit and offset of each
+                    document. Corresponds to the number of quotes to be shown.
+        """
+        sentence_dict = self.search_to_sentence(query, context_size)
+        quote_dict = {}
+        files = sorted(sentence_dict)
+        n = 0 # number of documents in the output
+        for i, f in enumerate(files):
+            if i == limit+offset:
+                break;
+            if i >= offset:
+                contexts = sentence_dict[f]
+                docoff = doclo[n][1]
+                docend = doclo[n][0] + docoff
+                quote_dict.setdefault(f, [])
+                for j, context in enumerate(contexts):
+                    if j == docend:
+                        break;
+                    if j >= docoff:
+                        quote_dict[f].append(context.cut_and_highlight())
+                n += 1
+                    
+                                   
+        return quote_dict
                 
     def __del__(self):
         self.db.close()
@@ -360,7 +393,7 @@ class SearchEngine(object):
 
 def main():
     se = SearchEngine("tolstoy_db")
-    print(se.multiword_search(input()))
+    print(se.search_to_quote(input()))
     del se
 
 

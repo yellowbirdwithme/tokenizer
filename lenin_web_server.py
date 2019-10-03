@@ -85,7 +85,6 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
             if n >= offset and n < limit+offset:
                 d_lim = form.getvalue("doc%dlimit" % n)
                 d_off = form.getvalue("doc%doffset" % n)
-                print(d_lim, d_off)
                 if not d_lim:
                     d_lim = 3
                 else:
