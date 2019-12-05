@@ -206,19 +206,18 @@ class SearchEngine(object):
         if not isinstance(query, str):
             raise ValueError
         
-        tokenizer = Tokenizer()
-        query = list(self.tok.generate_AD(query))
-        simple_search_results = []
+        query = list(self.tok.generate_AD(query)) 
+        simple_search_results = [] #list of sets {filenames}
         for word in query:
             simple_search_results.append(set(self.simple_search(word.s)))
 
         if not simple_search_results:
             return {}
         
-        files_found = simple_search_results[0]
+        files_found = simple_search_results[0] #set of files with all words
         for result in simple_search_results:
             files_found.intersection_update(result)
-        final_result = {}
+        final_result = {} #dict {files: [positions]}
         for f in files_found:
             for word in query:
                 final_result.setdefault(f, []).extend(self.db[word.s][f])
@@ -353,8 +352,10 @@ class SearchEngine(object):
                 quote_dict.setdefault(f, []).append(context.cut_and_highlight())
         return quote_dict
 
-    def search_to_quote_limit(self, query, context_size=3, limit=10, offset=0,
-                     doclo=[(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0)]):
+    def search_to_quote_limit(self, query, limit=10, offset=0,
+                              doclo=[(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),
+                                     (3,0),(3,0),(3,0)],
+                              context_size=3):
         """
         Args:
             query (str): search query
@@ -374,18 +375,135 @@ class SearchEngine(object):
                 break;
             if i >= offset:
                 contexts = sentence_dict[f]
-                docoff = doclo[n][1]
-                docend = doclo[n][0] + docoff
+                try:
+                    docoff = doclo[n][1]
+                    docend = doclo[n][0] + docoff
+                except IndexError:
+                    docoff = 0
+                    docend = 3
                 quote_dict.setdefault(f, [])
                 for j, context in enumerate(contexts):
                     if j == docend:
                         break;
                     if j >= docoff:
                         quote_dict[f].append(context.cut_and_highlight())
-                n += 1
-                    
-                                   
+                n += 1                      
         return quote_dict
+
+    def multiword_search_limit_doc(self, query, limit=10, offset=0):
+        if not isinstance(query, str):
+            raise ValueError
+        if limit <= 0:
+            return {}
+        if offset < 0:
+            offset = 0
+
+        query = list(self.tok.generate_AD(query))
+        simple_search_results = [] #list of sets {filenames}
+        for word in query:
+            simple_search_results.append(set(self.simple_search(word.s)))
+
+        if not simple_search_results:
+            return {}
+
+        files_found = simple_search_results[0] #set of files with all words
+        for result in simple_search_results:
+                files_found.intersection_update(result)
+
+        files_found = sorted(files_found)[offset: limit+offset]
+        final_result = {} #dict {files: [positions]}
+        for f in files_found:
+            for word in query:
+                final_result.setdefault(f, []).extend(self.db[word.s][f])
+            final_result[f].sort()
+        return final_result
+
+    def search_to_context_acc(self, query, limit, offset, context_size=3):
+        positions_dict = self.multiword_search_limit_doc(query, limit, offset)
+        context_dict = self.get_context_windows(positions_dict, context_size)
+        return context_dict
+    
+    def search_to_sentence_acc(self, query, limit, offset, context_size=3):
+        context_dict = self.search_to_context_acc(query, limit, offset,
+                                                  context_size)
+        for contexts in context_dict.values():
+            for context in contexts:
+                context.to_sentence()
+        sentence_dict = self.join_contexts(context_dict)
+        return sentence_dict
+    
+    def search_to_quote_acc(self, query, limit=10, offset=0,
+                              doclo=[(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),
+                                     (3,0),(3,0),(3,0)],
+                              context_size=3):
+        sentence_dict = self.search_to_sentence_acc(query, limit, offset,
+                                                    context_size)
+        print(sentence_dict)
+        quote_dict = {}
+        files = sorted(sentence_dict)
+        n = 0 # number of documents in the output
+        for f in files:
+                contexts = sentence_dict[f]
+                try:
+                    docoff = doclo[n][1]
+                    docend = doclo[n][0] + docoff
+                except IndexError:
+                    docoff = 0
+                    docend = 3
+                quote_dict.setdefault(f, [])
+                for j, context in enumerate(contexts):
+                    if j == docend:
+                        break;
+                    if j >= docoff:
+                        quote_dict[f].append(context.cut_and_highlight())
+                n += 1                      
+        return quote_dict
+    
+    def position_generator(self, lists):
+        iters = [iter(x) for x in lists] 
+        firsts = [next(it) for it in iters] 
+        while firsts:
+            m = min(firsts)
+            yield m
+            m_pos = firsts.index(m)
+            try:
+                firsts[m_pos] = next(iters[m_pos])
+            except StopIteration:
+                iters.pop(m_pos)
+                firsts.pop(m_pos)
+
+    def multiword_search_gen(self, query, limit=10, offset=0):
+        if not isinstance(query, str):
+            raise ValueError
+        if limit <= 0:
+            return {}
+        if offset < 0:
+            offset = 0
+
+        query = list(self.tok.generate_AD(query)) 
+        simple_search_results = [] #list of sets {filenames}
+        lists = {} #dict {file:[list of lists of positions]}
+        for word in query:
+            res = self.simple_search(word.s)
+            simple_search_results.append(set(res))
+            for f in res:
+                lists.setdefault(f, []).append(res[f])
+
+        if not simple_search_results:
+            return {}
+
+        files_found = simple_search_results[0] #set of files with all words
+        for result in simple_search_results:
+            files_found.intersection_update(result)
+
+        files_found = sorted(files_found)[offset: limit+offset]
+        final_result = {} #dict {files: position_generator}
+        
+        for f in files_found:
+            final_result[f] = self.position_generator(lists[f])
+        return final_result
+
+        
                 
     def __del__(self):
         self.db.close()
