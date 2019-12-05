@@ -300,5 +300,101 @@ class PositionGeneratorTest(unittest.TestCase):
             if filename.startswith("test_db."):
                 os.remove(filename)
 
+
+class ContextGeneratorTest(unittest.TestCase):
+    def setUp(self):
+        self.se = SearchEngine("test_db")
+        self.se.db.update(DB)
+        with open("test.txt", 'w') as f:
+            f.write(TEST)
+        with open("test1.txt", 'w') as f:
+            f.write(TEST1)
+
+    def test_generator(self):
+        pos = [Position(0, 10, 14), Position(1, 9, 13)]
+        result = list(self.se.context_generator("test.txt", pos, 2))
+        ideal = [Context([Position(0, 10, 14)], TEST[:19], 5, 19),
+                 Context([Position(1, 9, 13)], TEST[20:], 3, 27)]
+        self.assertEqual(result, ideal)
+
+    def test_generator2(self):
+        pos = [Position(0, 0, 4), Position(0, 5, 7)]
+        result = list(self.se.context_generator("test.txt", pos, 1))
+        ideal = [Context([Position(0, 0, 4), Position(0, 5, 7)],
+                         TEST[:19], 0, 9)]
+        self.assertEqual(result, ideal)
+
+    def text_generator3(self):
+        pos = [Position(0, 0, 4), Position(0, 10, 14), Position(1, 0, 2),
+               Position(1, 3, 5), Position (1, 14, 20)]
+        result = list(self.se.context_generator("test.txt", pos, 1))
+        ideal = [Context([Position(0, 0, 4)], TEST[:19], 0, 7),
+                 Context([Position(0, 10, 14)], TEST[:19], 8, 19),
+                 Context([Position(1, 0, 2), Position(1, 3, 5)],
+                         TEST[20:], 0, 8),
+                 Context([Position(1, 14, 20)], TEST[20:], 9, 27)]
+        self.assertEqual(result, ideal)
+
+    def test_search_to_context(self):
+        result = self.se.search_to_context_gen("to test")
+        ideal = {'test.txt': [Context([Position(0, 10, 14)], TEST[:19], 0, 19),
+                              Context([Position(1, 6, 8),
+                                       Position(1, 9, 13)], TEST[20:], 0, 27)],
+                 'test1.txt': [Context([Position(0, 13, 15),
+                                        Position(0, 16, 20)], TEST1, 0, 38)]}
+        for f in result:
+            self.assertEqual(list(result[f]), ideal[f])
+        
+    def tearDown(self):
+        del self.se
+        for filename in os.listdir('.'):
+            if filename.startswith("test_db."):
+                os.remove(filename)
+        os.remove("test.txt")
+        os.remove("test1.txt")
+
+
+class SentnceGeneratorTest(unittest.TestCase):
+    def setUp(self):
+        self.se = SearchEngine("test_db")
+        self.se.db.update(DB)
+        with open("test3.txt", 'w') as f:
+            f.write(TEST3)
+        
+    def test_join_two_contexts(self):
+        # вообще Дурацкие
+        con = [Context([Position(0, 43, 49)], TEST3, 0, 66),
+               Context([Position(0, 67, 75)], TEST3, 51, 81)]
+        ideal = [Context([Position(0, 43, 49), Position(0, 67, 75)],
+                         TEST3, 0, 81)]
+        result = list(self.se.sentence_generator(con))
+        self.assertEqual(result, ideal)
+        
+
+    def test_search_to_sentence(self):
+        query = "Дурацкие вообще"
+        result = self.se.search_to_sentence_gen(query)
+        ideal = {'test3.txt': [Context([Position(0, 43, 49),
+                                        Position(0, 67, 75)],
+                                       TEST3, 0, 81)]}
+        for f in result:
+            self.assertEqual(list(result[f]), ideal[f])
+
+    def test_search_to_sentence_2(self):
+        query = "Я Дурацкие"
+        result = self.se.search_to_sentence_gen(query, 0)
+        ideal = {'test3.txt': [Context([Position(0, 0, 1)], TEST3, 0, 50),
+                               Context([Position(0, 67, 75)], TEST3, 67, 81)]}
+        for f in result:
+            self.assertEqual(list(result[f]), ideal[f])
+            
+    def tearDown(self):
+        del self.se
+        for filename in os.listdir('.'):
+            if filename.startswith("test_db."):
+                os.remove(filename)
+        os.remove("test3.txt")
+
+
 if __name__ == '__main__':
     unittest.main()

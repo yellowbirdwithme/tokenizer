@@ -503,7 +503,47 @@ class SearchEngine(object):
             final_result[f] = self.position_generator(lists[f])
         return final_result
 
-        
+    def context_generator(self, f, position_generator, context_size):
+        null = Context([], "", 0, 0)
+        pc = null
+        for n in position_generator:
+            nc = Context.from_file(f, n, context_size)
+            if pc.isintersected(nc):
+                pc.join(nc)
+            else:
+                if pc is not null:
+                    yield pc
+                pc = nc
+        yield pc
+
+    def search_to_context_gen(self, query, limit=10, offset=0, context_size=3):
+        positions_dict = self.multiword_search_gen(query, limit, offset)
+        context_dict = {}
+        for f in positions_dict:
+            context_dict[f] = self.context_generator(f, positions_dict[f],
+                                                     context_size)
+        return context_dict
+
+    def sentence_generator(self, context_generator):
+        null = Context([], "", 0, 0)
+        pc = null
+        for nc in context_generator:
+            nc.to_sentence()
+            if pc.isintersected(nc):
+                pc.join(nc)
+            else:
+                if pc is not null:
+                    yield pc
+                pc = nc
+        yield pc
+
+    def search_to_sentence_gen(self, query, limit=10, offset=10, context_size=3):
+        context_dict = self.search_to_context_gen(query, limit, offset,
+                                                  context_size)
+        sentence_dict = {}
+        for f in context_dict:
+            sentence_dict[f] = self.sentence_generator(f, conteext_dict[f])
+        return sentence_dict
                 
     def __del__(self):
         self.db.close()
