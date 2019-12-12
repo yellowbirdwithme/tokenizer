@@ -52,7 +52,6 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
             else:
                 lim = 3
             quotelimit.append(lim)
-        
 
         #identifying type of request
         request = find_pressed_button(form, limit)
@@ -66,7 +65,7 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
             for i, lim in enumerate(quotelimit):
                 doclo.append((lim + 1, lim*quotepage[i]))
             start_time = time.time()
-            result = se.search_to_quote_acc(query, limit=limit + 1, doclo=doclo)
+            result = se.search_to_quote_gen(query, limit=limit + 1, doclo=doclo)
             print("time ", (time.time() - start_time))
         else:
             docpage, quotepage = get_pages(form, limit)
@@ -76,12 +75,11 @@ class SearchRequestHandler(BaseHTTPRequestHandler):
             for i, lim in enumerate(quotelimit):
                 doclo.append((lim + 1, lim*quotepage[i]))
             start_time = time.time()
-            result = se.search_to_quote_acc(query,
+            result = se.search_to_quote_gen(query,
                                               limit=limit + 1,
                                               offset=docpage * limit,
                                               doclo=doclo)
             print("time ", (time.time() - start_time))
-            
             
         #response page
         self.send_response(200)
@@ -220,7 +218,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-######### нормально ли, что при перелистывании страниц количество цитат остается тем же?
-######### т.е., если у файла 1 было 5 цитат, а у 2 - 3, то на следующей странице у 3 будет
-######### 5, а у 4 - 3

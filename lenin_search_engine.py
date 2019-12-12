@@ -391,6 +391,24 @@ class SearchEngine(object):
         return quote_dict
 
     def multiword_search_limit_doc(self, query, limit=10, offset=0):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary with a fixed number of files that contain all the words
+        of the query starting from a fixed one. If any of the words of the
+        query is not in the database, no files will be found.
+
+        Args:
+            query (str): search query
+            limit (int): numder of files in the dictionary returned
+            offset (int): from which file to start
+
+        Returns:
+            Dictionary of files and positions of all the words of the query
+            in a given file in the format {filename: [positions of all words]}
+
+        Raises:
+            ValueError: in case query is not str.
+        """
         if not isinstance(query, str):
             raise ValueError
         if limit <= 0:
@@ -419,11 +437,19 @@ class SearchEngine(object):
         return final_result
 
     def search_to_context_acc(self, query, limit, offset, context_size=3):
+        """
+        The same as search_to_context except it has limit and offset, i.e.
+        returns limit number of files starting from offset.
+        """
         positions_dict = self.multiword_search_limit_doc(query, limit, offset)
         context_dict = self.get_context_windows(positions_dict, context_size)
         return context_dict
     
     def search_to_sentence_acc(self, query, limit, offset, context_size=3):
+        """
+        The same as search_to_sentence except it has limit and offset, i.e.
+        returns limit number of files starting from offset.
+        """
         context_dict = self.search_to_context_acc(query, limit, offset,
                                                   context_size)
         for contexts in context_dict.values():
@@ -436,6 +462,12 @@ class SearchEngine(object):
                               doclo=[(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),
                                      (3,0),(3,0),(3,0)],
                               context_size=3):
+        """
+        The same as search_to_quote except it has limit and offset, i.e.
+        returns limit number of files starting from offset.
+        It also allows to set limits and offsets for the number of quotes for
+        each file.
+        """
         sentence_dict = self.search_to_sentence_acc(query, limit, offset,
                                                     context_size)
         print(sentence_dict)
@@ -460,6 +492,14 @@ class SearchEngine(object):
         return quote_dict
     
     def position_generator(self, lists):
+        """
+        Joins several sorted lists of positions into a single sorted list.
+        
+        Args:
+        lists (list): list of lists of positions
+
+        Returns: sorted list of positions from all of the original lists
+        """
         iters = [iter(x) for x in lists] 
         firsts = [next(it) for it in iters] 
         while firsts:
@@ -473,6 +513,24 @@ class SearchEngine(object):
                 firsts.pop(m_pos)
 
     def multiword_search_gen(self, query, limit=10, offset=0):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary with a fixed number of files that contain all the words
+        of the query starting from a fixed one. If any of the words of the
+        query is not in the database, no files will be found.
+
+        Args:
+            query (str): search query
+            limit (int): numder of files in the dictionary returned
+            offset (int): from which file to start
+
+        Returns:
+            Dictionary of files and positions of all the words of the query
+            in a given file in the format {filename: position_generator}
+
+        Raises:
+            ValueError: in case query is not str.
+        """
         if not isinstance(query, str):
             raise ValueError
         if limit <= 0:
@@ -504,6 +562,18 @@ class SearchEngine(object):
         return final_result
 
     def context_generator(self, f, position_generator, context_size):
+        """
+        Creates context windows given filename and position, joins them, if
+        intersecting.
+        
+        Args:
+            f (str): filename
+            position_generator: generator ot list of instances of class Position
+            context_size (int): size of the context window
+
+        Yields:
+            instances of class Context
+        """
         null = Context([], "", 0, 0)
         pc = null
         for n in position_generator:
@@ -517,6 +587,24 @@ class SearchEngine(object):
         yield pc
 
     def search_to_context_gen(self, query, limit=10, offset=0, context_size=3):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary of files, that contain all the words of the query. If any
+        of the words of the query is not in the database, no files will be
+        found.
+        The values in the dictionary are contexts of the found words joined
+        if intersecting each other.
+
+        Args:
+            query (str): search query
+            limit (int): numbes of files in the returned dictionary
+            offset (int): from which file to start
+            context_size (int): size of the context window
+
+        Returns:
+            Dictionary of files and contexts of all the words of the query
+            in a given file in the format {filename: context_generator}
+        """
         positions_dict = self.multiword_search_gen(query, limit, offset)
         context_dict = {}
         for f in positions_dict:
@@ -525,6 +613,16 @@ class SearchEngine(object):
         return context_dict
 
     def sentence_generator(self, context_generator):
+        """
+        Extends contexts to sentence boundaries and joins if intersecting each
+        other.
+        
+        Args:
+            context_generator: contexts
+            
+        Yields:
+            instances of class Context
+        """
         null = Context([], "", 0, 0)
         pc = null
         for nc in context_generator:
@@ -538,12 +636,80 @@ class SearchEngine(object):
         yield pc
 
     def search_to_sentence_gen(self, query, limit=10, offset=10, context_size=3):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary of files, that contain all the words of the query. If any
+        of the words of the query is not in the database, no files will be
+        found.
+        The values in the dictionary are contexts of the found words extended to
+        the sentence boundaries and joined if intersecting each other.
+
+        Args:
+            query (str): search query
+            limit (int): numbes of files in the returned dictionary
+            offset (int): from which file to start
+            context_size (int): size of the initial context window built for
+                                search results
+
+        Returns:
+            Dictionary of files and contexts of all the words of the query
+            in a given file in the format {filename: sentence_generator}
+        """
         context_dict = self.search_to_context_gen(query, limit, offset,
                                                   context_size)
         sentence_dict = {}
         for f in context_dict:
-            sentence_dict[f] = self.sentence_generator(f, conteext_dict[f])
+            sentence_dict[f] = self.sentence_generator(context_dict[f])
         return sentence_dict
+
+    def search_to_quote_gen(self, query, limit=10, offset=0,
+                            doclo=[(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),(3,0),
+                                     (3,0),(3,0),(3,0)],
+                              context_size=3):
+        """
+        Performs a search of a multiword query against the database. Returns
+        a dictionary of files, that contain all the words of the query. If any
+        of the words of the query is not in the database, no files will be
+        found.
+        The values in the dictionary are quotes with found words surrounded by
+        <b></b> HTML tags.
+        It allows to set limit and offset on the number of files in the result
+        and the number of quotes for each file.
+
+        Args:
+            query (str): search query
+            limit (int): numbes of files in the returned dictionary
+            offset (int): from which file to start
+            doclo (list): list of sets of two numbers - limits and offsets for
+                          quotes in each file in the returned dictionary
+            context_size (int): size of the initial context window built for
+                                search results
+
+        Returns:
+            Dictionary of files and quotes of all the words of the query
+            in a given file in the format {filename: [quotes(str)]}
+        """
+        sentence_dict = self.search_to_sentence_gen(query, limit, offset,
+                                                    context_size)
+        quote_dict = {}
+        n = 0 # number of documents in the output
+        for f in sorted(sentence_dict):
+            try:
+                docoff = doclo[n][1]
+                doclim = doclo[n][0]
+            except IndexError:
+                docoff = 0
+                doclim = 3
+            quote_dict.setdefault(f, [])
+            for x in range(docoff):
+                next(sentence_dict[f])
+            for x in range(doclim):
+                try:
+                    quote_dict[f].append(next(sentence_dict[f]).cut_and_highlight())
+                except StopIteration:
+                    break
+            n += 1
+        return quote_dict
                 
     def __del__(self):
         self.db.close()
